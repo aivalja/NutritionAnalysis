@@ -1,0 +1,140 @@
+THSCODE;DESCRIPT;LANG
+MI0001;Carbohydrate, EC Nutrition Labelling Directive, calculated from available carbohydrate and polyols;FI
+MI0002;EuroFIR recipe calculation procedure;FI
+MI0003;Recipe level calculation procedure;FI
+MI0004;Ingredient level calculation procedure;FI
+MI0005;Other recipe calculation procedure;FI
+MI0101;Energy calculated according to Southgate (kcal);FI
+MI0102;Energy calculated according to Atwater (kcal, general factors);FI
+MI0103;Energy calculated according to Codex Alimentarius (kcal);FI
+MI0104;Energy calculated according to Codex Alimentarius (kJ);FI
+MI0105;Energy calculated according to Southgate (kJ);FI
+MI0106;Energy calculated according to Atwater (specific factors);FI
+MI0107;Energy calculated according to EC Nutrition Labelling Directive (kJ);FI
+MI0108;Energy calculated according to EC Nutrition Labelling Directive (kcal);FI
+MI0109;Energy calculated according to EC Nutrition Labelling Directive (kJ, polydextrose exception);FI
+MI0110;Energy calculated according to Nordic Nutrition Recommendations (kJ);FI
+MI0121;Protein calculated from amino acid nitrogen;FI
+MI0122;Protein calculated from protein nitrogen;FI
+MI0123;Protein calculated from total nitrogen;FI
+MI0124;Protein calculated as the sum of individual amino acids;FI
+MI0131;Carbohydrate, total, calculated by difference;FI
+MI0141;Water by difference, generic;FI
+MI0142;Water by difference;FI
+MI0143;Dry matter calculated from water content;FI
+MI0151;Sugar calculated as the sum of  individual mono-, di-, and tri-saccharides;FI
+MI0153;Sugar calculated as the sum of total mono- and di-saccharides;FI
+MI0161;Starch by difference;FI
+MI0171;Dietary fibre calculated from total carbohydrates and available carbohydrate;FI
+MI0172;Dietary fibre calculated from individual fibre fractions;FI
+MI0181;Carbohydrate, available calculated from sugar and starch;FI
+MI0182;Carbohydrate, available calculated from sugar, starch, oligosaccharides and matodextrins;FI
+MI0183;Carbohydrate, available, calculated by difference;FI
+MI0201;Fatty acid content calculated on fatty acid profile (%);FI
+MI0202;Fatty acids, total fatty acids calculated as sum of individual fatty acids;FI
+MI0203;Fatty acids, monounsaturated fatty acids calculated by difference;FI
+MI0205;Fatty acids, saturated fatty acids by difference;FI
+MI0206;Fatty acids, trans fatty acids by difference;FI
+MI0207;Fatty acids, total fatty acids calculated from total fat;FI
+MI0208;Fatty acids, saturated, calculated as the sum of individual fatty acids, excluding branched chain isomers;FI
+MI0209;Fatty acids, saturated, calculated as the sum of individual fatty acids, including branched chain isomers;FI
+MI0210;Fatty acids, monounsaturated, calculated as sum of individual fatty acids, cis isomers only;FI
+MI0211;Fatty acids, monounsaturated, calculated as sum of individual fatty acids, including trans isomers;FI
+MI0212;Fatty acids, polyunsaturated, calculated as sum of individual fatty acids, all-cis isomers only;FI
+MI0213;Fatty acids, polyunsaturated, calculated as sum of individual fatty acids, excluding all-trans isomers;FI
+MI0214;Fatty acids, polyunsaturated, calculated as sum of individual fatty acids,  including all isomers;FI
+MI0215;Fatty acids, other polyunsaturated fatty acids calculated by difference;FI
+MI0216;Fatty acids, total polyunsaturated n-3 fatty acids;FI
+MI0231;Inputation of a component from one or more components in the same food;FI
+MI0301;Beta-carotene equivalent calculculation including alpha-carotene and cryptoxanthins;FI
+MI0302;Carotenes, total, calculated as sum of carotenoids (no activity adjustment);FI
+MI0303;Beta-carotene calculated from total vitamin A;FI
+MI0314;Retinol calculated from individual retinoids;FI
+MI0315;Retinol calculated from trans- and cis-retinol;FI
+MI0316;Retinol by difference;FI
+MI0321;Vitamin A activity calculated from retinol and beta-carotene (factor 1/2);FI
+MI0322;Vitamin A activity calculated from retinol and beta-carotene (factor 1/6);FI
+MI0323;Vitamin A activity calculated from retinol, beta-carotene and other pro-vitamin A carotenoids (factors 1/6 and 1/12);FI
+MI0324;Vitamin A activity calculated from retinol and carotenoids;FI
+MI0351;Vitamin D activity calculated as the sum of ergocalciferol and cholecalciferol;FI
+MI0352;Vitamin D activity calculated as ergocalciferol;FI
+MI0353;Vitamin D activity calculated from cholecalciferol and 25-hydroxy cholecalciferol (factor 5);FI
+MI0354;Vitamin D activity calculated from cholecalciferol, ergocalciferol and 25-hydroxy cholecalciferol;FI
+MI0365;Vitamin E activity calculated from tocopherols and tocotrienols;FI
+MI0368;Vitamin E activity calculated as d-alpha-tocopherol;FI
+MI0369;Vitamin E activity calculated from intrinsic d-alpha-tocoperol and added alpha-tocopherol;FI
+MI0421;Niacin equivalents calculated from niacin and tryptophan;FI
+MI0422;Niacin equivalents calculated from niacin and tryptophan (reduced niacin availability);FI
+MI0423;Niacin equivalents calculated from tryptophan only;FI
+MI0451;Folate calculated by summation of free folic acid and bound folic acid;FI
+MI0452;Folate calculated from free folic acid and bound folic acid;FI
+MI0453;Folate calculated from intrinsic folic acid and added folic acid;FI
+MI0512;Sugar calculated as the sum of individual mono- and disaccharides;FI
+MI1001;Ashing;FI
+MI1002;Spectroscopy;FI
+MI1006;Atomic absorption spectroscopy;FI
+MI1010;Bioassay;FI
+MI1013;Colorimetry;FI
+MI1015;Column chromatography;FI
+MI1017;Drying;FI
+MI1018;Dry ashing;FI
+MI1019;Dye binding;FI
+MI1021;Enzyme hydrolysis;FI
+MI1023;Chemical assay;FI
+MI1025;Freeze drying;FI
+MI1026;Gas-liquid chromatography;FI
+MI1037;Ion-se­lective electrode;FI
+MI1038;Karl Fisher titration;FI
+MI1039;Distillation titrimetry;FI
+MI1044;Polarimetry;FI
+MI1045;Radio-protein binding assay;FI
+MI1046;Reductiometry;FI
+MI1049;Schoorl method;FI
+MI1053;Titrimetry;FI
+MI1054;Total sugars method;FI
+MI1060;Enzymatic-colorimetric method;FI
+MI1061;Enzymatic, other method;FI
+MI1063;Englyst method;FI
+MI1064;Southgate method;FI
+MI1081;Distillation;FI
+MI1103;Air drying;FI
+MI1121;Hydrolysis;FI
+MI1137;High-performance liquid chromatography;FI
+MI1142;Atomic emission spectroscopy;FI
+MI1144;Chromatography;FI
+MI1152;Fluorimetric method;FI
+MI1154;Colorimetric method;FI
+MI1160;Bomb calorimetry;FI
+MI1165;Nuclear magnetic resonance spectroscopy;FI
+MI1173;Microbiological assay;FI
+MI1174;Animal bioassay;FI
+MI1182;Gas chromatography mass spectroscopy;FI
+MI1183;Liquid chromatography - mass spectrometry;FI
+MI1196;Microwave ashing;FI
+MI1197;Wet ashing;FI
+MI1202;Acid hydrolysis with gravimetric quantification;FI
+MI1203;Radioimmunoassay;FI
+MI1205;Gas chromatography;FI
+MI1207;Refractometry;FI
+MI1208;Specific gravity measurement;FI
+MI1209;Inductively Coupled Plasma Mass Spectrometry;FI
+MI1212;Vacuum drying;FI
+MI1213;Enzymatic colorimetry;FI
+MI1214;Binding assay;FI
+MI1215;Potentiometry;FI
+MI1216;Thermal combustion;FI
+MI1218;Enzymatic;FI
+MI1301;Dumas method;FI
+MI1302;Solvent extraction;FI
+MI1303;X-ray fluorescence spectroscopy;FI
+MI1304;Near infrared spectroscopy;FI
+MI1305;Inductively Coupled Plasma Atomic Emission Spectrometry;FI
+MI1307;Enzymatic-gravimetric method;FI
+MIR001;Analytical methods;FI
+MIR002;Calculation methods;FI
+MIR003;Analytical or calculation method not known;FI
+MIR004;Difference;FI
+MIR005;Factored summation;FI
+MIR006;Simple summation;FI
+MIR007;Imputation;FI
+MIR008;Recipe calculation methods;FI

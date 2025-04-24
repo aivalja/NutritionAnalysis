@@ -1,0 +1,154 @@
+THSCODE;DESCRIPT;LANG
+FRUITTOT;Hedelmät;FI
+APPLE;Omenahedelmät;FI
+CITRUS;Sitrushedelmät;FI
+FRUITOTH;Muut hedelmät;FI
+BERRY;Marjat;FI
+FRUITCAN;Hedelmäsäilykkeet;FI
+JUICE;Täysmehut;FI
+FBDRINK;Mehujuomat;FI
+VEGTOT;Kasvikset;FI
+VEGLEAF;Lehtivihannekset;FI
+VEGFRU;Vihanneshedelmät;FI
+CABBAGE;Kaalit;FI
+VEGONI;Sipulikasvikset;FI
+ROOT;Juuri- ja mukulakasvit;FI
+MUSHRO;Sienet;FI
+VEGJUICE;Kasvisjuomat;FI
+VEGCANN;Kasvissäilykkeet;FI
+LEGUTOT;Palkokasvit ja pähkinät;FI
+PEABEAN;Palkokasvit;FI
+NUTSEED;Pähkinät, siemenet;FI
+LEGUPROD;Palkokasvituotteet;FI
+SOYAPROD;Soijavalmisteet;FI
+LEGULIQ;Juomat palkokasveista, pähkinöistä ja siemenistä;FI
+POTATOT;Perunat;FI
+POTATO;Peruna;FI
+POTAPROD;Perunavalmisteet;FI
+CERTOT;Viljat;FI
+WHEAT;Vehnä;FI
+RYE;Ruis;FI
+OAT;Kaura ja kauratuotteet;FI
+BARLEY;Ohra ja ohratuotteet;FI
+RICE;Riisi;FI
+CEROTH;Muu vilja;FI
+CERBAR;Viljapatukat;FI
+OATLIQ;Kaurajuomat, nestemäiset kauratuotteet;FI
+CEROTLIQ;Viljajuomat, nestemäiset viljatuotteet;FI
+STARCH;Tärkkelykset;FI
+OATBAR;POISTETTU_Kaura, ohra;FI
+PASTA;POISTETTU_Pasta, makaroni;FI
+BRHARD;POISTETTU_Kuiva leipä;FI
+BISCUIT;POISTETTU_Keksit;FI
+MILKTOT;Maito;FI
+CREAM;Kerma/ creme;FI
+ICECREAM;Jäätelö;FI
+MILKFF;Rasvaton maito ;FI
+MILKLF;Vähärasvainen maito, rasvaa <= 2 %;FI
+MILKHF;Rasvainen maito, rasvaa > 2 % ;FI
+MILKINGR;Maitojauheet;FI
+SOURMILK;Piimä;FI
+YOGHURHI;Jogurtit, rasvaa > 1 %;FI
+YOGHURLO;Jogurtit, rasvaa <= 1 %;FI
+MILKCURL;Viili;FI
+CURD;Rahka;FI
+SOUCREAM;Hapanmaitotuotteet, muut;FI
+CHEECUHI;Juustot, kypsytetyt, rasvaa >17 %;FI
+CHEECULO;Juustot, kypsytetyt, rasvaa  <= 17%;FI
+CHEEUNHI;Juustot, tuorejuustot, rasvaa >15 %;FI
+CHEEUNLO;Juustot, tuorejuustot, rasvaa <= 15 %;FI
+CHEEPRHI;Juustot, sulatejuustot, rasvaa > 17 %;FI
+CHEEPRLO;Juustot, sulatejuustot, rasvaa <= 17 %;FI
+VEGCHEES;Juusto, kasvirasva-;FI
+MILK;POISTETTU_Maidot;FI
+SMILK;POISTETTU_Hapanmaitotuotteet;FI
+CHEESE;POISTETTU_Juusto;FI
+MILKOTH;POISTETTU_Muu maito;FI
+FATTOT;Ravintorasvat;FI
+OIL;Öljy;FI
+FATANIM;Eläinrasva;FI
+BUTTER;Voi, maitorasva;FI
+BUTTHIGH;Rasvaseos>= 55 %;FI
+BUTTLOW;Rasvaseokset < 55 %;FI
+VEGFATHI;Margariini ja rasvalevite >= 55%;FI
+VEGFATLO;Margariini ja  rasvalevite <55%;FI
+FATCOOK;Ruoanvalmistus- ja teollisuusrasva;FI
+SALADDRE;Salaatinkastikkeet ja majoneesit;FI
+BUTTMIX;POISTETTU_Voi, maitorasvaseokset;FI
+FATVEG;POISTETTU_Margariini ja rasvalevitteet >55%;FI
+FATLVEG;POISTETTU_Margariini ja  rasvalevite <55%;FI
+FATHARD;POISTETTU_Ruoanvalmistus- ja teollisuusrasva;FI
+FATOTH;POISTETTU_Muu rasva, rasvavalmisteet;FI
+EGGTOT;Muna;FI
+EGG;Kananmunat;FI
+EGGOTH;Muiden lintujen munat;FI
+FISHTOT;Kala;FI
+FISH;Kalat;FI
+FISHPROD;Kalavalmisteet;FI
+SHELLFIS;Äyriäiset ja nilviäiset;FI
+INSECT;Syötävät hyönteiset;FI
+MEATTOT;Lihat;FI
+BEEF;Naudanliha;FI
+PORK;Sianliha;FI
+LAMM;Lammas;FI
+POULTRY;Kanalinnut;FI
+SAUSAGE;Makkarat;FI
+SAUSCUTS;Makkaraleikkeleet;FI
+MEATCUTS;Lihaleikkeleet;FI
+MEATPROD;Lihavalmisteet;FI
+GAME;Riista;FI
+OFFAL;Elimet;FI
+BEVTOT;Juomat;FI
+COFFEE;Kahvi;FI
+TEA;Tee;FI
+WATER;Vesi;FI
+SDRINK;Virvoitusjuomat;FI
+DRINKART;Keinotekoisesti makeutetut juomat;FI
+DRINKCO;Kofeiinipitoiset virvoitusjuomat;FI
+DRSPORT;Urheilujuomat;FI
+DRINKOTH;Muut juomat;FI
+ALCTOT;Alkoholijuomat;FI
+BEER;Oluet;FI
+CIDER;Siiderit;FI
+WINE;Viinit;FI
+SPIRIT;Väkevät viinat;FI
+ALCOTH;Muut alkoholijuomat;FI
+SUGARTOT;Sokerit ja makeiset;FI
+SUGARSYR;Sokerit, siirapit;FI
+SWEET;Makeiset;FI
+CHOCOLAT;Suklaa;FI
+JAM;Hillot;FI
+SUGAROTH;POISTETTU_Sekalaiset makeat;FI
+FLAVTOT;Mausteet;FI
+HERB;Kuivatut yrtit;FI
+FLAVSEED;Kuivatut mausteet;FI
+FLAVSAUC;Maustekastikkeet;FI
+INGRTOT;Valmistusaineet;FI
+SALT;Suolat;FI
+SWEAGE;Makeutusaineet;FI
+INGRMIS;Valmistuksen apuaineet;FI
+INDTOT;POISTETTU_Teolliset ruoat;FI
+SNACK;POISTETTU_Naposteltavat;FI
+INDMEAL;POISTETTU_Teollinen ruoka;FI
+DIETTOT;Ravintovalmisteet;FI
+BABYFOOD;Lastenruoat;FI
+MMILK;Äidinmaitokorvikkeet ja äidinmaito;FI
+VITSUPPL;Vitamiinivalmiste;FI
+VITMISUP;Vitamiini-kivennäisainevalmiste;FI
+MINSUPPL;Kivennäisainevalmiste;FI
+FATSUPPL;Rasvavalmiste (sis. lesitiinivalmisteet);FI
+FIBSUPPL;Kuituvalmiste;FI
+ENZYMES;Entsyymivalmiste;FI
+HERBSUP;Yrttivalmiste (sis. mehiläisvalmiste);FI
+HERBVIT;Yrttivalmiste, jossa vitamiineja;FI
+HERBMIN;Yrttivalmiste, jossa kivennäisaineita;FI
+HOMEOS;Homeopaattinen valmiste;FI
+PROBPREB;Probiootti- ja bakteerivalmiste;FI
+YEAST;Hiivavalmiste;FI
+SUPPLOTH;Ravintolisä, muu;FI
+ANTROPOS;POISTETTU_Antroposofiset valmisteet;FI
+SPECFOOD;Kliiniset ravintovalmisteet;FI
+MEALREP;Ateriankorvikkeet;FI
+SPORTFOO;Urheiluvalmisteet;FI
+NONINGR;Ei raaka-aine;FI
+DISH;Ruokalaji;FI

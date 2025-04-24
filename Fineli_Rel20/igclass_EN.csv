@@ -1,0 +1,154 @@
+THSCODE;DESCRIPT;LANG
+FRUITTOT;Fruits;EN
+APPLE;Malaceous fruit;EN
+CITRUS;Citrus fruit;EN
+FRUITOTH;Other fruits;EN
+BERRY;Berries;EN
+FRUITCAN;Canned fruits;EN
+JUICE;Juices;EN
+FBDRINK;Juice drink;EN
+VEGTOT;Vegetables;EN
+VEGLEAF;Leaf vegetables;EN
+VEGFRU;Fruit vegetables;EN
+CABBAGE;Cabbages;EN
+VEGONI;Onion-family vegetables;EN
+ROOT;Root vegetables and tubers;EN
+MUSHRO;Edible fungi;EN
+VEGJUICE;Vegetable juices;EN
+VEGCANN;Canned vegetables;EN
+LEGUTOT;Pulses and nuts;EN
+PEABEAN;Pulses vegetables;EN
+NUTSEED;Nuts and seeds;EN
+LEGUPROD;Pulse products;EN
+SOYAPROD;Soya products;EN
+LEGULIQ;Soya, nut or seed drinks;EN
+POTATOT;Potatoes;EN
+POTATO;Potato;EN
+POTAPROD;Potato products;EN
+CERTOT;Cereals;EN
+WHEAT;Wheat;EN
+RYE;Rye;EN
+OAT;Oat and oat products ;EN
+BARLEY;Barley and barley products;EN
+RICE;Rice;EN
+CEROTH;Other grains;EN
+CERBAR;Cereal bars;EN
+OATLIQ;Oat drinks, liquid oat products;EN
+CEROTLIQ;Cereal drinks, liquid ceral products;EN
+STARCH;Starches;EN
+OATBAR;POISTETTU_Oats and barley;EN
+PASTA;POISTETTU_Pasta and macaroni;EN
+BRHARD;POISTETTU_Crispbreads;EN
+BISCUIT;POISTETTU_Biscuits;EN
+MILKTOT;Milk;EN
+CREAM;Cream;EN
+ICECREAM;Ice cream;EN
+MILKFF;Milks skimmed;EN
+MILKLF;Milks <= 2% fat;EN
+MILKHF;Milks >2% fat;EN
+MILKINGR;Milk powders;EN
+SOURMILK;Soured milks;EN
+YOGHURHI;Yoghurt > 1 %;EN
+YOGHURLO;Yoghurt  <= 1 %;EN
+MILKCURL;Cultured milks;EN
+CURD;Quark;EN
+SOUCREAM;Fermented milk products, other;EN
+CHEECUHI;Cheese, ripened cheese > 17 %;EN
+CHEECULO;Cheese, ripened cheese <= 17 %;EN
+CHEEUNHI;Cheese, unripened, fresh cheese >15 %;EN
+CHEEUNLO;Cheese, unripened, fresh cheese <=15 %;EN
+CHEEPRHI;Processed cheese >17%;EN
+CHEEPRLO;Processed cheese <= 17%;EN
+VEGCHEES;Modified cheeses;EN
+MILK;POISTETTU_Milks;EN
+SMILK;POISTETTU_Fermented milk products;EN
+CHEESE;POISTETTU_Cheese;EN
+MILKOTH;POISTETTU_Other milk products;EN
+FATTOT;Fat;EN
+OIL;Oils;EN
+FATANIM;Animal fat;EN
+BUTTER;Butter, milk fat;EN
+BUTTHIGH;Blended spread >= 55 %;EN
+BUTTLOW;Blended spread  < 55 %;EN
+VEGFATHI;Margarine and fat spread >= 55%;EN
+VEGFATLO;Margarine and fat spread  < 55%;EN
+FATCOOK;Cooking and industrial fat;EN
+SALADDRE;Salad dressings and mayonnaises;EN
+BUTTMIX;POISTETTU_Butter and butter spread;EN
+FATVEG;POISTETTU_Margarine and fat spread >55%;EN
+FATLVEG;POISTETTU_Margarine and fat spread <55%;EN
+FATHARD;POISTETTU_Fats for cooking and industrial use;EN
+FATOTH;POISTETTU_Other fat products;EN
+EGGTOT;Egg;EN
+EGG;Chicken eggs;EN
+EGGOTH;Other eggs;EN
+FISHTOT;Fish;EN
+FISH;Fish;EN
+FISHPROD;Fish products;EN
+SHELLFIS;Crustaceans and molluscs;EN
+INSECT;Edible insects;EN
+MEATTOT;Meat;EN
+BEEF;Beef;EN
+PORK;Pork;EN
+LAMM;Lamb/mutton;EN
+POULTRY;Birds;EN
+SAUSAGE;Sausages;EN
+SAUSCUTS;Cold cuts, sausages;EN
+MEATCUTS;Cold cuts, meat;EN
+MEATPROD;Meat products;EN
+GAME;Game meat;EN
+OFFAL;Offal;EN
+BEVTOT;Beverages;EN
+COFFEE;Coffee;EN
+TEA;Tea;EN
+WATER;Water;EN
+SDRINK;Soft drinks;EN
+DRINKART;Drinks with artificial sweeteners;EN
+DRINKCO;Soft drink with caffeine;EN
+DRSPORT;Sportdrinks;EN
+DRINKOTH;Other drinks;EN
+ALCTOT;Alcoholic beverages;EN
+BEER;Beers;EN
+CIDER;Ciders;EN
+WINE;Wines;EN
+SPIRIT;Spirits;EN
+ALCOTH;Other alcoholic beverages;EN
+SUGARTOT;Sugar and confectionery;EN
+SUGARSYR;Sugar and syrups;EN
+SWEET;Non-chocolate confectionery;EN
+CHOCOLAT;Chocolate;EN
+JAM;Jams;EN
+SUGAROTH;POISTETTU_Other sugar products;EN
+FLAVTOT;Spices;EN
+HERB;Dried herbs;EN
+FLAVSEED;Dried spices;EN
+FLAVSAUC;Condiments;EN
+INGRTOT;Other ingredients;EN
+SALT;Salt;EN
+SWEAGE;Sweeteners;EN
+INGRMIS;Miscellaneous ingredients;EN
+INDTOT;POISTETTU_Manufactured food;EN
+SNACK;POISTETTU_Snacks;EN
+INDMEAL;POISTETTU_Manufactured food;EN
+DIETTOT;Products for special nutritional use;EN
+BABYFOOD;Baby foods;EN
+MMILK;Infant formulas and human milk;EN
+VITSUPPL;Vitamin supplement;EN
+VITMISUP;Vitamin-mineral supplement;EN
+MINSUPPL;Mineral supplement;EN
+FATSUPPL;Fat supplement (incl. lecithin);EN
+FIBSUPPL;Fiber supplement;EN
+ENZYMES;Enzyme supplement;EN
+HERBSUP;Herbal supplement;EN
+HERBVIT;Herbal supplement with vitamins;EN
+HERBMIN;Herbal supplement with minerals;EN
+HOMEOS;Homeopathic supplement;EN
+PROBPREB;Probiot and bacteria supplement;EN
+YEAST;Yeast supplement;EN
+SUPPLOTH;Dietary supplement, other;EN
+ANTROPOS;POISTETTU_Anthroposophic supplement;EN
+SPECFOOD;Products for nutritional support;EN
+MEALREP;Meal replacements;EN
+SPORTFOO;Sport food;EN
+NONINGR;Non-ingredient;EN
+DISH;Dish;EN

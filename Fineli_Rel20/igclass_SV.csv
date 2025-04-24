@@ -1,0 +1,154 @@
+THSCODE;DESCRIPT;LANG
+FRUITTOT;Frukt;SV
+APPLE;Äppelfrukt;SV
+CITRUS;Citrusfrukter;SV
+FRUITOTH;Övrig frukt;SV
+BERRY;Bär;SV
+FRUITCAN;Fruktkonserver;SV
+JUICE;Juicer;SV
+FBDRINK;Saftdrycker;SV
+VEGTOT;Grönsaker;SV
+VEGLEAF;Bladgrönsaker;SV
+VEGFRU;Grönsaksfrukt;SV
+CABBAGE;Kål;SV
+VEGONI;Lökgrönsaker;SV
+ROOT;Rot- och knölväxter;SV
+MUSHRO;Svamp;SV
+VEGJUICE;Grönsaksjuice;SV
+VEGCANN;Grönsakskonserver;SV
+LEGUTOT;Baljväxter och nötter;SV
+PEABEAN;Baljväxter;SV
+NUTSEED;Nötter, frön;SV
+LEGUPROD;Baljväxtprodukter;SV
+SOYAPROD;Sojaprodukter;SV
+LEGULIQ;Drycker av soja, nötter eller frön;SV
+POTATOT;Potatis;SV
+POTATO;Potatis;SV
+POTAPROD;Potatisprodukter;SV
+CERTOT;Spannmål;SV
+WHEAT;Vete;SV
+RYE;Råg;SV
+OAT;Havre och havreprodukter;SV
+BARLEY;Korn och kornprodukter;SV
+RICE;Ris;SV
+CEROTH;Övrigt spannmål;SV
+CERBAR;Spannmålsstänger;SV
+OATLIQ;Havredrycker, flytande havreprodukter;SV
+CEROTLIQ;Spannmålsdrycker, flytande spannmålsprodukter;SV
+STARCH;Stärkelse;SV
+OATBAR;POISTETTU_Havre, korn;SV
+PASTA;POISTETTU_Pasta, makaroner;SV
+BRHARD;POISTETTU_Torrt bröd;SV
+BISCUIT;POISTETTU_Kex;SV
+MILKTOT;Mjölk;SV
+CREAM;Grädde/creme;SV
+ICECREAM;Glass;SV
+MILKFF;Mjölkdrycker fettfria;SV
+MILKLF;Mjölkdrycker <= 2%;SV
+MILKHF;Mjölkdrycker >2%;SV
+MILKINGR;Mjölkpulver;SV
+SOURMILK;Surmjölk;SV
+YOGHURHI;Yoghurt > 1 %;SV
+YOGHURLO;Yoghurt  <= 1 %;SV
+MILKCURL;Fil;SV
+CURD;Kvarg;SV
+SOUCREAM;Syrade mjölkprodukter;SV
+CHEECUHI;Ost, mogen > 17 %;SV
+CHEECULO;Ost, mogen <=17 %;SV
+CHEEUNHI;Färskost >15 %;SV
+CHEEUNLO;Färskost <= 15%;SV
+CHEEPRHI;Smältost >17 %;SV
+CHEEPRLO;Smältost <= 17 %;SV
+VEGCHEES;Ost med vegetabiliskt fett;SV
+MILK;POISTETTU_Mjölk;SV
+SMILK;POISTETTU_Syrade mjölkprodukter;SV
+CHEESE;POISTETTU_Ost;SV
+MILKOTH;POISTETTU_Övrig mjölk;SV
+FATTOT;Näringsfetter;SV
+OIL;Olja;SV
+FATANIM;Animaliskt fett;SV
+BUTTER;Smör, mjölkfett;SV
+BUTTHIGH;Matfettsblandning  >= 55 %;SV
+BUTTLOW;Matfettsblandning   < 55 %;SV
+VEGFATHI;Margarin och matfett >=  55%;SV
+VEGFATLO;Margarin och matfett <55%;SV
+FATCOOK;Matlagningsfett och industriellt fett;SV
+SALADDRE;Salladsdressing och majonnäser;SV
+BUTTMIX;POISTETTU_Smör, mjölkfettblandningar;SV
+FATVEG;POISTETTU_Margarin och matfett >55 %;SV
+FATLVEG;POISTETTU_Margarin och matfett <55 %;SV
+FATHARD;POISTETTU_Matlagnings- och industrifett;SV
+FATOTH;POISTETTU_Övriga fetter, fettprodukter;SV
+EGGTOT;Ägg;SV
+EGG;Ägg, hönsägg;SV
+EGGOTH;Ägg av andra fåglar;SV
+FISHTOT;Fisk;SV
+FISH;Fisk;SV
+FISHPROD;Fiskprodukter;SV
+SHELLFIS;Skaldjur;SV
+INSECT;Ätbara insekter;SV
+MEATTOT;Kött;SV
+BEEF;Nöt;SV
+PORK;Gris;SV
+LAMM;Lamm;SV
+POULTRY;Fåglar;SV
+SAUSAGE;Korv;SV
+SAUSCUTS;Korvpålägg;SV
+MEATCUTS;Köttpålägg;SV
+MEATPROD;Köttprodukter;SV
+GAME;Vilt;SV
+OFFAL;Organ;SV
+BEVTOT;Drycker;SV
+COFFEE;Kaffe;SV
+TEA;Te;SV
+WATER;Vatten;SV
+SDRINK;Läskedrycker;SV
+DRINKART;Syntetiskt sötade drycker;SV
+DRINKCO;Koffeinhaltiga läskedrycker;SV
+DRSPORT;Sportdrycker;SV
+DRINKOTH;Övriga drycker;SV
+ALCTOT;Alkoholdrycker;SV
+BEER;Öl;SV
+CIDER;Cider;SV
+WINE;Vin;SV
+SPIRIT;Starksprit;SV
+ALCOTH;Övriga alkoholdrycker;SV
+SUGARTOT;Socker och sötsaker;SV
+SUGARSYR;Socker, sirap;SV
+SWEET;Sötsaker;SV
+CHOCOLAT;Choklad;SV
+JAM;Sylts;SV
+SUGAROTH;POISTETTU_Diverse godis;SV
+FLAVTOT;Kryddor;SV
+HERB;Torkade örter;SV
+FLAVSEED;Torkade kryddor;SV
+FLAVSAUC;Kryddsåser;SV
+INGRTOT;Tillverkningsämnen;SV
+SALT;Salt;SV
+SWEAGE;Sötningsmedel;SV
+INGRMIS;Hjälpämnen vid tillverkning;SV
+INDTOT;POISTETTU_Industriella maträtter;SV
+SNACK;POISTETTU_Snacks;SV
+INDMEAL;POISTETTU_Industriell mat;SV
+DIETTOT;Näringspreparat;SV
+BABYFOOD;Barnmat;SV
+MMILK;Modersmjölksersättningar och modersmjölk;SV
+VITSUPPL;Vitaminpreparat;SV
+VITMISUP;Vitamin- och mineralpreparat;SV
+MINSUPPL;Mineralpreparat;SV
+FATSUPPL;Fettpreparat (inkl. lecitin);SV
+FIBSUPPL;Fiberpreparat;SV
+ENZYMES;Enzym preparat;SV
+HERBSUP;Ört preparat;SV
+HERBVIT;Ört preparat med vitaminer;SV
+HERBMIN;Ört preparat med mineraler;SV
+HOMEOS;Homeopatisk preparat;SV
+PROBPREB;Probiot och bakterie preparat;SV
+YEAST;Jäst preparat;SV
+SUPPLOTH;Näringspreparat, övrigt;SV
+ANTROPOS;POISTETTU_Antroposofisk preparat;SV
+SPECFOOD;Kliniska näringspreparat;SV
+MEALREP;Måltidsersättningar;SV
+SPORTFOO;Sport produkter;SV
+NONINGR;Icke råvara;SV
+DISH;Maträtt;SV

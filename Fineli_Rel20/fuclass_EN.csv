@@ -1,0 +1,176 @@
+THSCODE;DESCRIPT;LANG
+FRUDITOT;Fruit and berry dishes;EN
+FRUFRESH;Fruits;EN
+FRUBSAL;Fruit and berry salads;EN
+BERFRESH;Berries;EN
+FRUBSOUP;Fruit and berry soups;EN
+FRUBDISH;Fruit and berry dishes other than pies;EN
+FRUBJUIC;Juices;EN
+FRUBPAST;POISTETTU_Berry and fruit pies;EN
+LEGUTOT;Pulses and pulse dishes;EN
+LEGUMES;Pulses;EN
+LEGUPROD;Pulse products;EN
+LEGUDISH;Pulse dishes;EN
+LEGUSOUP;Pulse soups;EN
+LEGUSAUC;Pulse sauces;EN
+VEGDITOT;Vegetable dishes;EN
+VEGFRESH;Vegetables;EN
+VEGPOT;Cooked vegetables;EN
+VEGDISH;Vegetable dishes;EN
+VEGSOUP;Vegetable soups;EN
+VEGSAUC;Vegetable sauces;EN
+MUSHRDI;Mushroom dishes;EN
+VEGCANN;Canned vegetables;EN
+VEGJUICE;Vegetable juices;EN
+VEGCASS;POISTETTU_Vegetable casseroles;EN
+SALADTOT;Prepared salads;EN
+SALADVEG;Vegetable salads;EN
+SALADMIX;Mixed salads;EN
+SALADMAY;Prepared salads with mayonnaise;EN
+POTATOT;Potatoes;EN
+POTACOOK;Cooked potatoes;EN
+POTADISH;Potato dishes;EN
+POTAFRIE;Fried potatoes, French fries;EN
+POTAFAT;POISTETTU_Fried or creamy potatoes;EN
+CEBAKTOT;Cereals and cereal products;EN
+BRMIX;Bread, mixed flour;EN
+BRWHITE;Wheat bread;EN
+BRRYE;Rye bread;EN
+BUN;Buns;EN
+BAKSWEET;Sweet bakery;EN
+BAKSALT;Savoury bakery;EN
+PANCAKE;Panncakes;EN
+SANDWICH;Sandwiches and burgers;EN
+BISCUSWE;Sweet biscuits;EN
+BISCUSAV;Savoury biscuits;EN
+RICEADD;Rice;EN
+PASTAADD;Pasta;EN
+PORR;Porridge;EN
+CERBRKF;Breakfast cereals;EN
+CERBAR;Cereal bars;EN
+PIZZA;Pizza;EN
+FLOUR;Flour;EN
+BISCUIT;POISTETTU_Biscuits;EN
+CERPR;POISTETTU_Pies and other cereal products;EN
+MILKDTOT;Milk dishes;EN
+MILKFF;Milks skimmed;EN
+MILKLF;Milks <2% fat;EN
+MILKHF;Milks >2% fat;EN
+SMILK;Soured milks;EN
+CREAM;Cream;EN
+YOGHURT;Yoghurt;EN
+MILKCURL;Cultured milks;EN
+CURD;Quark;EN
+SOUCREAM;Fermented milk products, other;EN
+CHEESCUR;Cheese, ripened cheese ;EN
+CHEESUNC;Cheese, unripened, fresh cheese;EN
+CHEESPRO;Processed cheese ;EN
+ICECREAM;Ice cream;EN
+MILKPUDD;Milk desserts;EN
+MILKSAUC;Milk sauces;EN
+CHEESHAR;POISTETTU_Hard cheeses;EN
+CHEESOFT;POISTETTU_Processed and fresh cheeses;EN
+VEGCHEES;POISTETTU_Modified cheeses;EN
+FATTOT;Fat and fat products;EN
+BUTTER;Butter, milk fat;EN
+FATANIM;Animal fat;EN
+BUTTEHIG;Blended spread >= 55 %;EN
+BUTTELOW;Blended spread  < 55 %;EN
+VEGFATLO;Margarine and fat spread  < 55%;EN
+VEGFATHI;Margarine and fat spread >= 55%;EN
+FATCOOK;Cooking and industrial fat;EN
+SALADDRE;Salad dressings and mayonnaises;EN
+OIL;Oils;EN
+BRFBUTT;POISTETTU_Butter and butter spread >60%;EN
+BRFMARG;POISTETTU_Margarine and fat spread >55%;EN
+BRFLOWF;POISTETTU_Margarine, butter spread and fat spread <55%;EN
+DRESSING;POISTETTU_Salad dressings;EN
+FATPROD;POISTETTU_Other fat products;EN
+FATSAUCE;POISTETTU_Fat sauces;EN
+EGGDISH;Egg dishes;EN
+EGGS;Egg;EN
+EGGMIX;Egg dishes;EN
+FISHDTOT;Fish dishes;EN
+FISH;Fish;EN
+FISHPROD;Fish products;EN
+FISHSOUP;Fish soups;EN
+FISHDISH;Fish dishes;EN
+FISHSAUC;Fish sauces;EN
+SEAFOOD;Crustaceans and molluscs;EN
+SEAFDISH;Seafood dishes, crustacean and molluscs;EN
+SEAFSOUP;Seafood soup;EN
+SEAFSAUC;Seafood sauces;EN
+INSECT;Edible insects;EN
+FISHCASS;POISTETTU_Fish casseroles;EN
+FISHDOTH;POISTETTU_Other fish dishes;EN
+MEATDTOT;Meat dishes;EN
+MSTEAK;Steaks and chops;EN
+MEATSOUP;Meat soups;EN
+MEATDISH;Meat dishes;EN
+POULTRY;Chicken and other birds;EN
+POULTDIS;Poultry dishes;EN
+POULTSOU;Poultry soups;EN
+POULSAUC;Poultry sauces;EN
+MEATPROD;Meat products;EN
+SAUSCUTS;Cold cuts, sausages;EN
+MEATCUTS;Cold cuts, meat;EN
+SAUSAGE;Sausages;EN
+OFFALDI;Offal dishes;EN
+MINCMED;POISTETTU_Minced meat dishes;EN
+MEATPOT;POISTETTU_Meat hot-pot;EN
+MEATCASS;POISTETTU_Meat casseroles;EN
+POULTDI;POISTETTU_Poultry dishes;EN
+SAUSDISH;POISTETTU_Sausage dishes;EN
+BEVTOT;Beverages;EN
+COFFEE;Coffee;EN
+TEA;Tea;EN
+DRWATER;Drinking water;EN
+DRJUICE;Juice drink;EN
+DRINKSO;Soft drink with sugar;EN
+DRINKART;Drinks with artificial sweeteners;EN
+DRSPORT;Sport drink;EN
+DRINKOTH;Other drinks;EN
+DRINKCO;POISTETTU_Soft drink with caffeine;EN
+ALCTOT;Alcoholic beverages;EN
+BEER;Beers;EN
+CIDER;Ciders;EN
+WINE;Wines;EN
+SPIRIT;Spirits;EN
+ALCOTH;Other alcoholic beverages;EN
+SUGARTOT;Sugar and confectionery;EN
+SUGADD;Sugar and syrups;EN
+SWEET;Confectionery;EN
+CHOCOL;Chocolate;EN
+JAM;Jams and marmalades;EN
+MISCTOT;Miscellaneous;EN
+SPICES;Spices;EN
+SPISAUCE;Condiments;EN
+SAVSAUCE;Savoury sauces;EN
+DESSAUCE;Dessert sauces;EN
+INGRMISC;Miscellaneous ingredients;EN
+SNACK;POISTETTU_Snacks;EN
+SNACKTOT;Snacks;EN
+SNACKSAV;Savoury snacks;EN
+SNACKVEG;Nuts, seeds and dried fruits;EN
+BABYFTOT;Babyfood;EN
+BABMEATD;Baby meat dish;EN
+BABFISHD;Baby fish dish;EN
+BABMILPO;Baby porridge with milk;EN
+BABWATPO;Baby porridge with water;EN
+BABFRUB;Baby fruit and berry product;EN
+BABVEGE;Baby vegetable product;EN
+BABMIFRU;Baby fruit with milk product;EN
+BABOTHER;Baby food, not specified;EN
+MMILK;Infant formulas and human milk;EN
+INFMILK;Infant formulas and human milk;EN
+CASMILK;Casein formulas;EN
+PREMILK;Premature formulas;EN
+SOYMILK;Soy milk formulas;EN
+WHEYMILK;Whey formulas;EN
+AMINMILK;Amino acid formulas;EN
+SPECTOT;Products for special nutritional use;EN
+SPECSUPP;Dietary supplement;EN
+MEALREP;Meal replacements;EN
+SPORTFOO;Sport food;EN
+SPECFOOD;Products for nutritional support;EN
+MEATSAUC;Meat sauces;EN

@@ -1,0 +1,176 @@
+THSCODE;DESCRIPT;LANG
+FRUDITOT;Frukt- och bärrätter;SV
+FRUFRESH;Färsk frukt;SV
+FRUBSAL;Frukt- och bärsallad;SV
+BERFRESH;Färska bär;SV
+FRUBSOUP;Kräm, soppor;SV
+FRUBDISH;Frukt- och bärrätter med undantag pajer;SV
+FRUBJUIC;Juicer;SV
+FRUBPAST;POISTETTU_Bärpajer;SV
+LEGUTOT;Baljväxter och baljväxträtter;SV
+LEGUMES;Baljväxter;SV
+LEGUPROD;Baljväxtprodukter;SV
+LEGUDISH;Baljväxträtter;SV
+LEGUSOUP;Baljväxtsoppor;SV
+LEGUSAUC;Baljväxtsåser;SV
+VEGDITOT;Vegetariska rätter;SV
+VEGFRESH;Färska grönsaker;SV
+VEGPOT;Kokta grönsaker;SV
+VEGDISH;Vegetariska huvudrätter;SV
+VEGSOUP;Grönsakssoppor;SV
+VEGSAUC;Grönsakssåser;SV
+MUSHRDI;Svamprätter;SV
+VEGCANN;Grönsakskonserver;SV
+VEGCASS;POISTETTU_Grönsakslådor;SV
+VEGJUICE;Grönsaksjuice;SV
+SALADTOT;Sallader;SV
+SALADVEG;Grönsakssallader;SV
+SALADMIX;Kombinerade sallader;SV
+SALADMAY;Majonnässallader;SV
+POTATOT;Potatis;SV
+POTACOOK;Kokt potatis;SV
+POTAFRIE;Stekt potatis, pommes frites;SV
+POTADISH;Potatisrätter;SV
+POTAFAT;POISTETTU_Stekt potatis, gräddpotatis;SV
+CEBAKTOT;Spannmål och bakverk;SV
+BRMIX;Blandbröd, fullkornsbröd;SV
+BRWHITE;Vetebröd ljust;SV
+BRRYE;Rågbröd;SV
+BUN;Kaffebröd;SV
+BAKSWEET;Bakverk söta;SV
+BAKSALT;Bakverk salta;SV
+PANCAKE;Pannkakor;SV
+SANDWICH;Smörgåsar och hamburger;SV
+BISCUSWE;Söta kex och småbröd;SV
+BISCUSAV;Smörgåskex;SV
+RICEADD;Ris;SV
+PASTAADD;Pastarätter;SV
+PORR;Gröt;SV
+CERBRKF;Frukostspannmålsprodukter;SV
+CERBAR;Spannmålsstänger;SV
+PIZZA;Pizza;SV
+FLOUR;Mjöl;SV
+BISCUIT;POISTETTU_Kex, småbröd;SV
+CERPR;POISTETTU_Pajer m.m.;SV
+MILKDTOT;Mjölkrätter;SV
+MILKFF;Mjölkdrycker fettfria;SV
+MILKLF;Mjölkdrycker <2%;SV
+MILKHF;Mjölkdrycker >2 %;SV
+SMILK;Surmjölk;SV
+CREAM;Grädde;SV
+YOGHURT;Yoghurt;SV
+MILKCURL;Fil;SV
+CURD;Kvarg;SV
+SOUCREAM;Syrade mjölkprodukter;SV
+CHEESCUR;Ost, mogen ;SV
+CHEESUNC;Färskost ;SV
+CHEESPRO;Smältost ;SV
+ICECREAM;Glass;SV
+MILKPUDD;Mjölkdesserter;SV
+MILKSAUC;Mjölksåser;SV
+CHEESHAR;POISTETTU_Ost, hård;SV
+CHEESOFT;POISTETTU_Ost, smält- och färskost;SV
+VEGCHEES;POISTETTU_Ost med vegetabiliskt fett;SV
+FATTOT;Fett och fettprodukter;SV
+BUTTER;Smör, mjölkfett;SV
+FATANIM;Animaliskt fett;SV
+BUTTEHIG;Matfettsblandning  >= 55 %;SV
+BUTTELOW;Matfettsblandning   < 55 %;SV
+VEGFATLO;Margarin och matfett <55%;SV
+VEGFATHI;Margarin och matfett >=  55%;SV
+FATCOOK;Matlagningsfett och industriellt fett;SV
+SALADDRE;Salladsdressing och majonnäser;SV
+OIL;Olja;SV
+BRFBUTT;POISTETTU_Brödfett smör eller mjölkfettblandning >60 %;SV
+BRFMARG;POISTETTU_Brödfett margarin och matfett >55 %;SV
+BRFLOWF;POISTETTU_Brödfett margarin, matfett och fettblandning <55 %;SV
+DRESSING;POISTETTU_Salladsdressing;SV
+FATPROD;POISTETTU_Övriga fetter;SV
+FATSAUCE;POISTETTU_Fettsåser;SV
+EGGDISH;Äggrätter;SV
+EGGS;Ägg;SV
+EGGMIX;Äggrätter;SV
+FISHDTOT;Fiskrätter;SV
+FISH;Fisk;SV
+FISHPROD;Fiskprodukt;SV
+FISHSOUP;Fisksoppa;SV
+FISHDISH;Fiskrätter;SV
+FISHSAUC;Fisksåser;SV
+SEAFOOD;Skaldjur och mollusker;SV
+SEAFDISH;Skaldjursrätter, skaldjur och mollusker;SV
+SEAFSOUP;Skaldjursoppa;SV
+SEAFSAUC;Skaldjurssås;SV
+INSECT;Ätbara insekter;SV
+FISHCASS;POISTETTU_Fisklådor;SV
+FISHDOTH;POISTETTU_Övriga fiskrätter;SV
+MEATDTOT;Kötträtter;SV
+MSTEAK;Biffar, kotletter;SV
+MEATSOUP;Köttsoppor;SV
+MEATDISH;Kötträtter;SV
+POULTRY;Kycklingar och övriga fåglar;SV
+POULTDIS;Fägelrätter;SV
+POULTSOU;Fågelsoppor;SV
+POULSAUC;Fågelsåser;SV
+MEATPROD;Köttprodukter;SV
+SAUSCUTS;Korvpålägg;SV
+MEATCUTS;Köttpålägg;SV
+SAUSAGE;Korv;SV
+OFFALDI;Inälvsrätter;SV
+MINCMED;POISTETTU_Köttfärsrätter;SV
+MEATPOT;POISTETTU_Köttgrytor;SV
+MEATCASS;POISTETTU_Köttlådor;SV
+POULTDI;POISTETTU_Hönsrätter;SV
+SAUSDISH;POISTETTU_Korvrätter;SV
+BEVTOT;Drycker;SV
+COFFEE;Kaffe;SV
+TEA;Te;SV
+DRWATER;Vatten;SV
+DRJUICE;Safter;SV
+DRINKSO;Söta läskedrycker;SV
+DRINKART;Syntetiskt sötade drycker;SV
+DRSPORT;Sportdrycker;SV
+DRINKOTH;Övriga drycker;SV
+DRINKCO;POISTETTU_Koffeinhaltiga läskedrycker;SV
+ALCTOT;Alkoholdrycker;SV
+BEER;Öl;SV
+CIDER;Cider;SV
+WINE;Vin;SV
+SPIRIT;Starksprit;SV
+ALCOTH;Övriga alkoholdrycker;SV
+SUGARTOT;Socker, sötsaker;SV
+SUGADD;Socker, sirap;SV
+SWEET;Sötsaker;SV
+JAM;Sylt, marmelad;SV
+CHOCOL;Choklad;SV
+MISCTOT;Diverse;SV
+SPICES;Kryddor;SV
+SPISAUCE;Kryddsåser;SV
+SAVSAUCE;Såser och buljonger;SV
+DESSAUCE;Dessertsåser;SV
+INGRMISC;Diverse födoämnen;SV
+SNACK;POISTETTU_Snacks;SV
+SNACKTOT;Snacks;SV
+SNACKSAV;Salta snacks;SV
+SNACKVEG;Nötter, frön och torka frukter;SV
+BABYFTOT;Barnmat;SV
+BABMEATD;Baby kötträtt preparat;SV
+BABFISHD;Baby fisk rätt;SV
+BABMILPO;Baby barn gröt med mjölk;SV
+BABWATPO;Baby barn gröt med vatten;SV
+BABFRUB;Baby frukt- och bärprodukt;SV
+BABVEGE;Baby barn grönsakspreparat;SV
+BABMIFRU;Baby frukt med mjölk produkt;SV
+BABOTHER;Barnmat ospecificerad;SV
+MMILK;Modersmjölksersättning;SV
+INFMILK;Vanliga modersmjölkersättningar och modersmjölk;SV
+CASMILK;Kasein hydrolysater, modersmjölkersättningar;SV
+PREMILK;Modersmjölkersättningar för prematurbarn;SV
+SOYMILK;Sojabaserade modersmjölkersättningar;SV
+WHEYMILK;Vassleprotein hydrolysater, modersmjölkersättningar;SV
+AMINMILK;Aminosyrapreparat, modersmjölkersättningar;SV
+SPECTOT;Näringspreparat;SV
+SPECSUPP;Näringspreparat;SV
+MEALREP;Måltidsersättningar;SV
+SPORTFOO;Sport produkter;SV
+SPECFOOD;Kliniska näringspreparat;SV
+MEATSAUC;Köttsåser;SV
