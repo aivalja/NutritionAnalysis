@@ -7,6 +7,8 @@ import numpy as np
 import os
 import pandas as pd
 import seaborn as sns
+import powerlaw
+from collections import Counter
 
 
 def print_result(label, value, indent=4):
@@ -271,6 +273,99 @@ def plot_centrality_histograms(centrality_dict, network_name="Network", save_dir
 
         plt.show()
 
+def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plots"):
+    """
+    Analyze if the centrality distributions follow a power law.
+
+    Parameters:
+    - centrality_dict: Dictionary of centrality measures from calculate_centralities function
+    - show_plot: Whether to display plots
+    - save_plots: Whether to save plot images
+    """
+    # Create directory if it doesn't exist
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    results = {}
+
+    for centrality_type, centrality_values in centrality_dict.items():
+        # Extract values from the centrality dictionary
+        values = list(centrality_values.values())
+
+        # Skip if insufficient data
+        if len(values) < 10:
+            print_result(f"{centrality_type.capitalize()} distribution analysis", 
+                         "Insufficient data for analysis")
+            continue
+
+        # Fit power law (need to handle zeros for some centrality measures)
+        # Add a small constant to avoid zeros which powerlaw can't handle
+        min_non_zero = min([v for v in values if v > 0]) / 10
+        adjusted_values = [v if v > 0 else min_non_zero for v in values]
+
+        fit = powerlaw.Fit(adjusted_values, discrete=False)
+        alpha = fit.alpha
+
+        # Compare to exponential distribution
+        R, p = fit.distribution_compare('power_law', 'exponential', normalized_ratio=True)
+
+        print_result(f"{centrality_type.capitalize()} power-law exponent alpha", f"{alpha:.4f}")
+        print_result(f"{centrality_type.capitalize()} log-likelihood ratio test", 
+                     f"R={R:.4f}, p-value={p:.4f}")
+
+        if p < 0.05:
+            if R > 0:
+                print_result(f"{centrality_type.capitalize()} distribution fit", 
+                             "Follows a power-law distribution (p < 0.05)")
+            else:
+                print_result(f"{centrality_type.capitalize()} distribution fit", 
+                             "Follows an exponential distribution (p < 0.05)")
+        else:
+            print_result(f"{centrality_type.capitalize()} distribution fit", 
+                         "Neither distribution is significantly favored (p >= 0.05)")
+
+        # Plot the distribution
+        plt.figure(figsize=(8, 6))
+
+        # Create histogram using numpy
+        hist, bin_edges = np.histogram(values, bins=30)
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+        # Filter out empty bins
+        non_zero_indices = hist > 0
+        hist_filtered = hist[non_zero_indices]
+        bin_centers_filtered = bin_centers[non_zero_indices]
+
+        if len(hist_filtered) > 1:  # Make sure we have at least 2 points for log-log plot
+            plt.loglog(bin_centers_filtered, hist_filtered, 'o', markersize=6)
+
+            # Add power law fit line for visualization
+            x_range = np.logspace(np.log10(min(bin_centers_filtered)), 
+                                 np.log10(max(bin_centers_filtered)), 50)
+            # Scale factor for visualization (approximate)
+            scale = hist_filtered[0] / (bin_centers_filtered[0] ** -alpha)
+            plt.loglog(x_range, scale * x_range**-alpha, 'r-', 
+                     label=f'Power Law Fit (α={alpha:.2f})')
+
+            plt.xlabel(f'{centrality_type.capitalize()} (log scale)')
+            plt.ylabel('Frequency (log scale)')
+            plt.title(f'{centrality_type.capitalize()} Distribution (Log-Log Scale)')
+            plt.grid(True, alpha=0.3)
+            plt.legend()
+
+            filename = f"{save_dir}/{centrality_type}_powerlaw.png"
+            plt.savefig(filename)
+
+            if show_plot:
+                plt.show()
+            else:
+                plt.close()
+        else:
+            print_result(f"{centrality_type.capitalize()} plotting", 
+                         "Not enough data points for log-log plot")
+
+        results[centrality_type] = (alpha, R, p)
+
+    return results
 
 # Example usage
 if __name__ == "__main__":
@@ -283,3 +378,5 @@ if __name__ == "__main__":
                                 'closeness': centrality_measures['closeness'],
                                 'betweenness': centrality_measures['betweenness']},
                                 "Full Network",save_dir="plots/centrality")
+
+    results = analyze_centrality_power_law(centrality_measures, save_dir="plots/powerlaw")
