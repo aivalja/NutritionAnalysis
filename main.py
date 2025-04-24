@@ -372,7 +372,9 @@ if __name__ == "__main__":
     # Create the nutritional network
     graph_data = create_nutritional_network("Fineli_Rel20", similarity_threshold=0.99)
 
-    centrality_measures = calculate_centralities(graph_data['graph'], use_approximation=False)
+    G = graph_data['graph']
+
+    centrality_measures = calculate_centralities(G, use_approximation=False)
 
     plot_centrality_histograms({'degree': centrality_measures['degree'],
                                 'closeness': centrality_measures['closeness'],
@@ -380,3 +382,18 @@ if __name__ == "__main__":
                                 "Full Network",save_dir="plots/centrality")
 
     results = analyze_centrality_power_law(centrality_measures, save_dir="plots/powerlaw")
+
+    node_clustering_coefficients = nx.clustering(G)
+
+    clustering_values = list(node_clustering_coefficients.values())
+
+    plt.figure(figsize=(10, 6))
+    # Create the histogram with 10 bins
+    plt.hist(clustering_values, bins=10, edgecolor='k', alpha=0.7)
+
+    plt.title('Histogram of Node Clustering Coefficients')
+    plt.xlabel('Clustering Coefficient')
+    plt.ylabel('Number of Nodes (Count)')
+    plt.grid(axis='y', linestyle='--')
+
+    plt.show()
