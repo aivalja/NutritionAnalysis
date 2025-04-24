@@ -1,14 +1,19 @@
-import pandas as pd
-import numpy as np
-import networkx as nx
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
+import random
 from sklearn.metrics.pairwise import cosine_similarity
-import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import os
-import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
+
+
+def print_result(label, value, indent=4):
+    """Print a formatted result with appropriate indentation."""
+    spaces = " " * indent
+    print(f"{spaces}{label}: {value}")
+
 
 # Function to load and preprocess the Fineli dataset
 def load_fineli_data(data_dir='.'):
@@ -193,24 +198,88 @@ def visualize_network(graph_data, max_nodes=100):
     # Show plot
     plt.show()
 
+
+def calculate_centralities(G, use_approximation=True, sample_size=500, k_betweenness=50):
+    """Calculate various centrality measures for the graph."""
+    print_result("Calculating centrality measures", "")
+    centrality = {}
+
+    # Basic centrality metrics
+    centrality['degree'] = nx.degree_centrality(G)
+
+    # More computationally expensive metrics
+    if use_approximation and G.number_of_nodes() > 1000:
+        print_result("Using approximation for closeness centrality", "", indent=6)
+        sampled_nodes = random.sample(list(G.nodes()), min(sample_size, G.number_of_nodes()))
+        centrality['closeness'] = {}
+
+        for node in sampled_nodes:
+            centrality['closeness'][node] = nx.closeness_centrality(G, u=node)
+
+        print_result("Using approximation for betweenness centrality", "", indent=6)
+        centrality['betweenness'] = nx.betweenness_centrality(G, k=k_betweenness, seed=42)
+    else:
+        print_result("Calculating full closeness centrality", "", indent=6)
+        centrality['closeness'] = nx.closeness_centrality(G)
+
+        print_result("Calculating full betweenness centrality", "", indent=6)
+        centrality['betweenness'] = nx.betweenness_centrality(G)
+
+    return centrality
+
+
+def plot_centrality_histograms(centrality_dict, network_name="Network", save_dir="plots"):
+    """Plot histograms for different centrality measures."""
+    # Create directory if it doesn't exist
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    centrality_types = centrality_dict.keys()
+
+    # Plot individual histograms
+    for c_type in centrality_types:
+        values = list(centrality_dict[c_type].values())
+
+        plt.figure(figsize=(10, 6))
+        plt.hist(values, bins=30, alpha=0.7, color='skyblue', edgecolor='black')
+        plt.title(f'{c_type.capitalize()} Centrality Distribution ({network_name})')
+        plt.xlabel('Centrality Value')
+        plt.ylabel('Frequency')
+        plt.grid(True, alpha=0.3)
+
+        filename = f"{save_dir}/{c_type}_centrality_{network_name.lower().replace(' ', '_')}.png"
+        plt.savefig(filename)
+
+        plt.close()
+        print_result("Saved histogram", filename, indent=6)
+
+    # Plot combined figure (optional for comparison)
+    if len(centrality_types) > 1:
+        fig, axes = plt.subplots(1, len(centrality_types), figsize=(5*len(centrality_types), 5))
+
+        for i, c_type in enumerate(centrality_types):
+            values = list(centrality_dict[c_type].values())
+            axes[i].hist(values, bins=30, alpha=0.7, color='skyblue', edgecolor='black')
+            axes[i].set_title(f'{c_type.capitalize()} Centrality')
+            axes[i].set_xlabel('Value')
+            axes[i].set_ylabel('Frequency')
+            axes[i].grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        filename = f"{save_dir}/combined_centrality_{network_name.lower().replace(' ', '_')}.png"
+        plt.savefig(filename)
+
+        plt.show()
+
+
 # Example usage
 if __name__ == "__main__":
     # Create the nutritional network
     graph_data = create_nutritional_network("Fineli_Rel20", similarity_threshold=0.99)
 
-    # Visualize the network
-    visualize_network(graph_data, max_nodes=1000)
+    centrality_measures = calculate_centralities(graph_data['graph'], use_approximation=False)
 
-    # Display some basic network metrics
-    G = graph_data['graph']
-    print("\nNetwork Metrics:")
-    print(f"Number of nodes (food items): {G.number_of_nodes()}")
-    print(f"Number of edges (similarities): {G.number_of_edges()}")
-
-    # Find the most connected food items
-    node_degrees = dict(G.degree())
-    top_connected = sorted(node_degrees.items(), key=lambda x: x[1], reverse=True)[:10]
-
-    print("\nMost connected food items:")
-    for food_id, degree in top_connected:
-        print(f"{graph_data['food_mapping'][food_id]}: {degree} connections")
+    plot_centrality_histograms({'degree': centrality_measures['degree'],
+                                'closeness': centrality_measures['closeness'],
+                                'betweenness': centrality_measures['betweenness']},
+                                "Full Network",save_dir="plots/centrality")
