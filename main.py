@@ -1,15 +1,13 @@
 import random
+import os
+import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import os
 import pandas as pd
-import seaborn as sns
 import powerlaw
-from collections import Counter
-import pickle
 
 
 def print_result(label, value, indent=4):
@@ -19,7 +17,7 @@ def print_result(label, value, indent=4):
 
 
 # Function to load and preprocess the Fineli dataset
-def load_fineli_data(data_dir='.'):
+def load_fineli_data(data_dir="."):
     """
     Loads and preprocesses the Fineli dataset files.
 
@@ -30,15 +28,15 @@ def load_fineli_data(data_dir='.'):
         Dictionary of preprocessed DataFrames
     """
     # Define file paths
-    food_file = os.path.join(data_dir, 'food.csv')
-    component_values_file = os.path.join(data_dir, 'component_value.csv')
-    component_file = os.path.join(data_dir, 'component.csv')
+    food_file = os.path.join(data_dir, "food.csv")
+    component_values_file = os.path.join(data_dir, "component_value.csv")
+    component_file = os.path.join(data_dir, "component.csv")
 
     # Load the CSV files with correct encoding and separator
     print("Loading data files...")
-    food_df = pd.read_csv(food_file, sep=';', encoding='latin1')
-    component_values_df = pd.read_csv(component_values_file, sep=';', encoding='latin1')
-    component_df = pd.read_csv(component_file, sep=';', encoding='latin1')
+    food_df = pd.read_csv(food_file, sep=";", encoding="latin1")
+    component_values_df = pd.read_csv(component_values_file, sep=";", encoding="latin1")
+    component_df = pd.read_csv(component_file, sep=";", encoding="latin1")
 
     print(f"Loaded {len(food_df)} food items")
     print(f"Loaded {len(component_values_df)} component values")
@@ -46,54 +44,61 @@ def load_fineli_data(data_dir='.'):
 
     # Convert decimal values from European format (comma) to standard format (period)
     print("Preprocessing component values...")
-    component_values_df['BESTLOC'] = component_values_df['BESTLOC'].astype(str).str.replace(',', '.').astype(float)
+    component_values_df["BESTLOC"] = (
+        component_values_df["BESTLOC"].astype(str).str.replace(",", ".").astype(float)
+    )
 
     # Check for missing values
     print("Checking for missing values...")
-    for df_name, df in [("food", food_df), ("component_values", component_values_df), ("component", component_df)]:
+    for df_name, df in [
+        ("food", food_df),
+        ("component_values", component_values_df),
+        ("component", component_df),
+    ]:
         missing_values = df.isnull().sum().sum()
         print(f"  {df_name}: {missing_values} missing values")
 
     # Identify potential zero values that might represent missing data
-    zero_values = (component_values_df['BESTLOC'] == 0).sum()
+    zero_values = (component_values_df["BESTLOC"] == 0).sum()
     print(f"  Number of zero values in BESTLOC: {zero_values}")
 
     # Create a pivot table for nutrient analysis
     print("Creating nutrient pivot table...")
     nutrient_pivot = component_values_df.pivot_table(
-        values='BESTLOC',
-        index='FOODID',
-        columns='EUFDNAME',
-        aggfunc='first'  # Use first if there are multiple values
+        values="BESTLOC",
+        index="FOODID",
+        columns="EUFDNAME",
+        aggfunc="first",  # Use first if there are multiple values
     ).reset_index()
 
     # Merge with food information
     print("Merging with food information...")
-    food_nutrients = nutrient_pivot.merge(food_df, on='FOODID', how='left')
+    food_nutrients = nutrient_pivot.merge(food_df, on="FOODID", how="left")
 
     # Check for potential outliers or inconsistent values
     print("Checking for potential outliers...")
     # Get numeric columns (excluding FOODID)
     numeric_columns = food_nutrients.select_dtypes(include=[np.number]).columns.tolist()
-    if 'FOODID' in numeric_columns:
-        numeric_columns.remove('FOODID')
+    if "FOODID" in numeric_columns:
+        numeric_columns.remove("FOODID")
 
     # Calculate basic statistics for numeric columns
     stats_df = food_nutrients[numeric_columns].describe().T
-    stats_df['missing'] = food_nutrients[numeric_columns].isnull().sum()
-    stats_df['zeros'] = (food_nutrients[numeric_columns] == 0).sum()
+    stats_df["missing"] = food_nutrients[numeric_columns].isnull().sum()
+    stats_df["zeros"] = (food_nutrients[numeric_columns] == 0).sum()
 
     print("Preprocessing complete!")
 
     return {
-        'food': food_df,
-        'component_values': component_values_df,
-        'component': component_df,
-        'food_nutrients': food_nutrients,
-        'stats': stats_df
+        "food": food_df,
+        "component_values": component_values_df,
+        "component": component_df,
+        "food_nutrients": food_nutrients,
+        "stats": stats_df,
     }
 
-def create_nutritional_network(data_dir='.', similarity_threshold=0.85):
+
+def create_nutritional_network(data_dir=".", similarity_threshold=0.85):
     """
     Creates a nutritional network graph where:
     - Nodes represent food items
@@ -108,16 +113,29 @@ def create_nutritional_network(data_dir='.', similarity_threshold=0.85):
     """
     # Load and preprocess data (using function from previous step)
     data = load_fineli_data(data_dir)
-    food_nutrients = data['food_nutrients']
+    food_nutrients = data["food_nutrients"]
 
     # Get food item information
-    food_ids = food_nutrients['FOODID'].values
-    food_names = food_nutrients['FOODNAME'].values
+    food_ids = food_nutrients["FOODID"].values
+    food_names = food_nutrients["FOODNAME"].values
 
     # Select only nutrient columns (excluding metadata columns)
-    nutrient_cols = [col for col in food_nutrients.columns
-                    if col not in ['FOODID', 'FOODNAME', 'FOODTYPE', 'PROCESS',
-                                  'EDPORT', 'IGCLASS', 'IGCLASSP', 'FUCLASS', 'FUCLASSP']]
+    nutrient_cols = [
+        col
+        for col in food_nutrients.columns
+        if col
+        not in [
+            "FOODID",
+            "FOODNAME",
+            "FOODTYPE",
+            "PROCESS",
+            "EDPORT",
+            "IGCLASS",
+            "IGCLASSP",
+            "FUCLASS",
+            "FUCLASSP",
+        ]
+    ]
 
     # Fill missing values with 0 (for this initial analysis)
     nutrients_data = food_nutrients[nutrient_cols].fillna(0)
@@ -138,19 +156,22 @@ def create_nutritional_network(data_dir='.', similarity_threshold=0.85):
 
     # Add edges based on similarity threshold
     for i in range(len(food_ids)):
-        for j in range(i+1, len(food_ids)):  # Avoid duplicates and self-loops
+        for j in range(i + 1, len(food_ids)):
             similarity = similarity_matrix[i, j]
             if similarity >= similarity_threshold:
                 G.add_edge(food_ids[i], food_ids[j], weight=similarity)
 
-    print(f"Created graph with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges")
+    print(
+        f"Created graph with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges"
+    )
     print(f"Using similarity threshold: {similarity_threshold}")
 
     return {
-        'graph': G,
-        'food_mapping': dict(zip(food_ids, food_names)),
-        'similarity_matrix': similarity_matrix
+        "graph": G,
+        "food_mapping": dict(zip(food_ids, food_names)),
+        "similarity_matrix": similarity_matrix,
     }
+
 
 def visualize_network(graph_data, max_nodes=100):
     """
@@ -160,8 +181,8 @@ def visualize_network(graph_data, max_nodes=100):
         graph_data: Output from create_nutritional_network
         max_nodes: Maximum number of nodes to display for readability
     """
-    G = graph_data['graph']
-    food_mapping = graph_data['food_mapping']
+    G = graph_data["graph"]
+    food_mapping = graph_data["food_mapping"]
 
     # If the graph is very large, take a subset for visualization
     if G.number_of_nodes() > max_nodes:
@@ -183,55 +204,65 @@ def visualize_network(graph_data, max_nodes=100):
     nx.draw_networkx_nodes(G_viz, pos, node_size=100, alpha=0.7)
 
     # Draw edges with weights affecting thickness
-    edge_weights = [G_viz.get_edge_data(u, v)['weight'] * 2 for u, v in G_viz.edges()]
+    edge_weights = [G_viz.get_edge_data(u, v)["weight"] * 2 for u, v in G_viz.edges()]
     nx.draw_networkx_edges(G_viz, pos, width=edge_weights, alpha=0.4)
 
     # Add node labels (food names) with smaller font
     labels = {node: food_mapping[node] for node in G_viz.nodes()}
-    nx.draw_networkx_labels(G_viz, pos, labels=labels, font_size=8, font_family='sans-serif')
+    nx.draw_networkx_labels(
+        G_viz, pos, labels=labels, font_size=8, font_family="sans-serif"
+    )
 
     plt.title("Nutritional Similarity Network of Food Items")
-    plt.axis('off')
+    plt.axis("off")
     plt.tight_layout()
 
     # Save the visualization
-    plt.savefig('nutritional_network.png', dpi=300, bbox_inches='tight')
+    plt.savefig("nutritional_network.png", dpi=300, bbox_inches="tight")
     print("Network visualization saved as 'nutritional_network.png'")
 
     # Show plot
     plt.show()
 
 
-def calculate_centralities(G, use_approximation=True, sample_size=500, k_betweenness=50):
+def calculate_centralities(
+    G, use_approximation=True, sample_size=500, k_betweenness=50
+):
     """Calculate various centrality measures for the graph."""
     print_result("Calculating centrality measures", "")
     centrality = {}
 
     # Basic centrality metrics
-    centrality['degree'] = nx.degree_centrality(G)
+    centrality["degree"] = nx.degree_centrality(G)
 
     # More computationally expensive metrics
     if use_approximation and G.number_of_nodes() > 1000:
         print_result("Using approximation for closeness centrality", "", indent=6)
-        sampled_nodes = random.sample(list(G.nodes()), min(sample_size, G.number_of_nodes()))
-        centrality['closeness'] = {}
+        sampled_nodes = random.sample(
+            list(G.nodes()), min(sample_size, G.number_of_nodes())
+        )
+        centrality["closeness"] = {}
 
         for node in sampled_nodes:
-            centrality['closeness'][node] = nx.closeness_centrality(G, u=node)
+            centrality["closeness"][node] = nx.closeness_centrality(G, u=node)
 
         print_result("Using approximation for betweenness centrality", "", indent=6)
-        centrality['betweenness'] = nx.betweenness_centrality(G, k=k_betweenness, seed=42)
+        centrality["betweenness"] = nx.betweenness_centrality(
+            G, k=k_betweenness, seed=42
+        )
     else:
         print_result("Calculating full closeness centrality", "", indent=6)
-        centrality['closeness'] = nx.closeness_centrality(G)
+        centrality["closeness"] = nx.closeness_centrality(G)
 
         print_result("Calculating full betweenness centrality", "", indent=6)
-        centrality['betweenness'] = nx.betweenness_centrality(G)
+        centrality["betweenness"] = nx.betweenness_centrality(G)
 
     return centrality
 
 
-def plot_centrality_histograms(centrality_dict, network_name="Network", save_dir="plots"):
+def plot_centrality_histograms(
+    centrality_dict, network_name="Network", save_dir="plots"
+):
     """Plot histograms for different centrality measures."""
     # Create directory if it doesn't exist
     if not os.path.exists(save_dir):
@@ -244,10 +275,10 @@ def plot_centrality_histograms(centrality_dict, network_name="Network", save_dir
         values = list(centrality_dict[c_type].values())
 
         plt.figure(figsize=(10, 6))
-        plt.hist(values, bins=30, alpha=0.7, color='skyblue', edgecolor='black')
-        plt.title(f'{c_type.capitalize()} Centrality Distribution ({network_name})')
-        plt.xlabel('Centrality Value')
-        plt.ylabel('Frequency')
+        plt.hist(values, bins=30, alpha=0.7, color="skyblue", edgecolor="black")
+        plt.title(f"{c_type.capitalize()} Centrality Distribution ({network_name})")
+        plt.xlabel("Centrality Value")
+        plt.ylabel("Frequency")
         plt.grid(True, alpha=0.3)
 
         filename = f"{save_dir}/{c_type}_centrality_{network_name.lower().replace(' ', '_')}.png"
@@ -258,14 +289,16 @@ def plot_centrality_histograms(centrality_dict, network_name="Network", save_dir
 
     # Plot combined figure (optional for comparison)
     if len(centrality_types) > 1:
-        fig, axes = plt.subplots(1, len(centrality_types), figsize=(5*len(centrality_types), 5))
+        fig, axes = plt.subplots(
+            1, len(centrality_types), figsize=(5 * len(centrality_types), 5)
+        )
 
         for i, c_type in enumerate(centrality_types):
             values = list(centrality_dict[c_type].values())
-            axes[i].hist(values, bins=30, alpha=0.7, color='skyblue', edgecolor='black')
-            axes[i].set_title(f'{c_type.capitalize()} Centrality')
-            axes[i].set_xlabel('Value')
-            axes[i].set_ylabel('Frequency')
+            axes[i].hist(values, bins=30, alpha=0.7, color="skyblue", edgecolor="black")
+            axes[i].set_title(f"{c_type.capitalize()} Centrality")
+            axes[i].set_xlabel("Value")
+            axes[i].set_ylabel("Frequency")
             axes[i].grid(True, alpha=0.3)
 
         plt.tight_layout()
@@ -273,6 +306,7 @@ def plot_centrality_histograms(centrality_dict, network_name="Network", save_dir
         plt.savefig(filename)
 
         plt.show()
+
 
 def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plots"):
     """
@@ -294,8 +328,10 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
 
         # Skip if insufficient data
         if len(values) < 10:
-            print_result(f"{centrality_type.capitalize()} distribution analysis", 
-                         "Insufficient data for analysis")
+            print_result(
+                f"{centrality_type.capitalize()} distribution analysis",
+                "Insufficient data for analysis",
+            )
             continue
 
         # Fit power law (need to handle zeros for some centrality measures)
@@ -307,22 +343,34 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
         alpha = fit.alpha
 
         # Compare to exponential distribution
-        R, p = fit.distribution_compare('power_law', 'exponential', normalized_ratio=True)
+        R, p = fit.distribution_compare(
+            "power_law", "exponential", normalized_ratio=True
+        )
 
-        print_result(f"{centrality_type.capitalize()} power-law exponent alpha", f"{alpha:.4f}")
-        print_result(f"{centrality_type.capitalize()} log-likelihood ratio test", 
-                     f"R={R:.4f}, p-value={p:.4f}")
+        print_result(
+            f"{centrality_type.capitalize()} power-law exponent alpha", f"{alpha:.4f}"
+        )
+        print_result(
+            f"{centrality_type.capitalize()} log-likelihood ratio test",
+            f"R={R:.4f}, p-value={p:.4f}",
+        )
 
         if p < 0.05:
             if R > 0:
-                print_result(f"{centrality_type.capitalize()} distribution fit", 
-                             "Follows a power-law distribution (p < 0.05)")
+                print_result(
+                    f"{centrality_type.capitalize()} distribution fit",
+                    "Follows a power-law distribution (p < 0.05)",
+                )
             else:
-                print_result(f"{centrality_type.capitalize()} distribution fit", 
-                             "Follows an exponential distribution (p < 0.05)")
+                print_result(
+                    f"{centrality_type.capitalize()} distribution fit",
+                    "Follows an exponential distribution (p < 0.05)",
+                )
         else:
-            print_result(f"{centrality_type.capitalize()} distribution fit", 
-                         "Neither distribution is significantly favored (p >= 0.05)")
+            print_result(
+                f"{centrality_type.capitalize()} distribution fit",
+                "Neither distribution is significantly favored (p >= 0.05)",
+            )
 
         # Plot the distribution
         plt.figure(figsize=(8, 6))
@@ -336,20 +384,29 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
         hist_filtered = hist[non_zero_indices]
         bin_centers_filtered = bin_centers[non_zero_indices]
 
-        if len(hist_filtered) > 1:  # Make sure we have at least 2 points for log-log plot
-            plt.loglog(bin_centers_filtered, hist_filtered, 'o', markersize=6)
+        if (
+            len(hist_filtered) > 1
+        ):  # Make sure we have at least 2 points for log-log plot
+            plt.loglog(bin_centers_filtered, hist_filtered, "o", markersize=6)
 
             # Add power law fit line for visualization
-            x_range = np.logspace(np.log10(min(bin_centers_filtered)), 
-                                 np.log10(max(bin_centers_filtered)), 50)
+            x_range = np.logspace(
+                np.log10(min(bin_centers_filtered)),
+                np.log10(max(bin_centers_filtered)),
+                50,
+            )
             # Scale factor for visualization (approximate)
             scale = hist_filtered[0] / (bin_centers_filtered[0] ** -alpha)
-            plt.loglog(x_range, scale * x_range**-alpha, 'r-', 
-                     label=f'Power Law Fit (α={alpha:.2f})')
+            plt.loglog(
+                x_range,
+                scale * x_range**-alpha,
+                "r-",
+                label=f"Power Law Fit (α={alpha:.2f})",
+            )
 
-            plt.xlabel(f'{centrality_type.capitalize()} (log scale)')
-            plt.ylabel('Frequency (log scale)')
-            plt.title(f'{centrality_type.capitalize()} Distribution (Log-Log Scale)')
+            plt.xlabel(f"{centrality_type.capitalize()} (log scale)")
+            plt.ylabel("Frequency (log scale)")
+            plt.title(f"{centrality_type.capitalize()} Distribution (Log-Log Scale)")
             plt.grid(True, alpha=0.3)
             plt.legend()
 
@@ -361,55 +418,67 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
             else:
                 plt.close()
         else:
-            print_result(f"{centrality_type.capitalize()} plotting", 
-                         "Not enough data points for log-log plot")
+            print_result(
+                f"{centrality_type.capitalize()} plotting",
+                "Not enough data points for log-log plot",
+            )
 
         results[centrality_type] = (alpha, R, p)
 
     return results
 
+
 # Example usage
 if __name__ == "__main__":
     # Define file paths for storing the data
-    graph_data_file = 'tmp/graph_data.pkl'
-    centrality_file = 'tmp/centrality_measures.pkl'
+    graph_data_file = "tmp/graph_data.pkl"
+    centrality_file = "tmp/centrality_measures.pkl"
 
     # Load or calculate graph_data
     if os.path.exists(graph_data_file):
         print(f"Loading graph data from {graph_data_file}...")
-        with open(graph_data_file, 'rb') as f:
+        with open(graph_data_file, "rb") as f:
             graph_data = pickle.load(f)
-        G = graph_data['graph']
+        G = graph_data["graph"]
         print("Graph data loaded.")
     else:
         print("Calculating graph data...")
-        graph_data = create_nutritional_network("Fineli_Rel20", similarity_threshold=0.99)
-        G = graph_data['graph']
+        graph_data = create_nutritional_network(
+            "Fineli_Rel20", similarity_threshold=0.99
+        )
+        G = graph_data["graph"]
         print(f"Saving graph data to {graph_data_file}...")
-        with open(graph_data_file, 'wb') as f:
+        with open(graph_data_file, "wb") as f:
             pickle.dump(graph_data, f)
         print("Graph data saved.")
 
     # Load or calculate centrality_measures
     if os.path.exists(centrality_file):
         print(f"Loading centrality measures from {centrality_file}...")
-        with open(centrality_file, 'rb') as f:
+        with open(centrality_file, "rb") as f:
             centrality_measures = pickle.load(f)
         print("Centrality measures loaded.")
     else:
         print("Calculating centrality measures...")
         centrality_measures = calculate_centralities(G, use_approximation=False)
         print(f"Saving centrality measures to {centrality_file}...")
-        with open(centrality_file, 'wb') as f:
+        with open(centrality_file, "wb") as f:
             pickle.dump(centrality_measures, f)
         print("Centrality measures saved.")
 
-    plot_centrality_histograms({'degree': centrality_measures['degree'],
-                                'closeness': centrality_measures['closeness'],
-                                'betweenness': centrality_measures['betweenness']},
-                                "Full Network",save_dir="plots/centrality")
+    plot_centrality_histograms(
+        {
+            "degree": centrality_measures["degree"],
+            "closeness": centrality_measures["closeness"],
+            "betweenness": centrality_measures["betweenness"],
+        },
+        "Full Network",
+        save_dir="plots/centrality",
+    )
 
-    results = analyze_centrality_power_law(centrality_measures, save_dir="plots/powerlaw")
+    results = analyze_centrality_power_law(
+        centrality_measures, save_dir="plots/powerlaw"
+    )
 
     node_clustering_coefficients = nx.clustering(G)
 
@@ -417,11 +486,11 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(10, 6))
     # Create the histogram with 10 bins
-    plt.hist(clustering_values, bins=10, edgecolor='k', alpha=0.7)
+    plt.hist(clustering_values, bins=10, edgecolor="k", alpha=0.7)
 
-    plt.title('Histogram of Node Clustering Coefficients')
-    plt.xlabel('Clustering Coefficient')
-    plt.ylabel('Number of Nodes (Count)')
-    plt.grid(axis='y', linestyle='--')
+    plt.title("Histogram of Node Clustering Coefficients")
+    plt.xlabel("Clustering Coefficient")
+    plt.ylabel("Number of Nodes (Count)")
+    plt.grid(axis="y", linestyle="--")
 
     plt.show()
