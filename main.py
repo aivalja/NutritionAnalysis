@@ -9,6 +9,7 @@ import pandas as pd
 import seaborn as sns
 import powerlaw
 from collections import Counter
+import pickle
 
 
 def print_result(label, value, indent=4):
@@ -369,12 +370,39 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
 
 # Example usage
 if __name__ == "__main__":
-    # Create the nutritional network
-    graph_data = create_nutritional_network("Fineli_Rel20", similarity_threshold=0.99)
+    # Define file paths for storing the data
+    graph_data_file = 'tmp/graph_data.pkl'
+    centrality_file = 'tmp/centrality_measures.pkl'
 
-    G = graph_data['graph']
+    # Load or calculate graph_data
+    if os.path.exists(graph_data_file):
+        print(f"Loading graph data from {graph_data_file}...")
+        with open(graph_data_file, 'rb') as f:
+            graph_data = pickle.load(f)
+        G = graph_data['graph']
+        print("Graph data loaded.")
+    else:
+        print("Calculating graph data...")
+        graph_data = create_nutritional_network("Fineli_Rel20", similarity_threshold=0.99)
+        G = graph_data['graph']
+        print(f"Saving graph data to {graph_data_file}...")
+        with open(graph_data_file, 'wb') as f:
+            pickle.dump(graph_data, f)
+        print("Graph data saved.")
 
-    centrality_measures = calculate_centralities(G, use_approximation=False)
+    # Load or calculate centrality_measures
+    if os.path.exists(centrality_file):
+        print(f"Loading centrality measures from {centrality_file}...")
+        with open(centrality_file, 'rb') as f:
+            centrality_measures = pickle.load(f)
+        print("Centrality measures loaded.")
+    else:
+        print("Calculating centrality measures...")
+        centrality_measures = calculate_centralities(G, use_approximation=False)
+        print(f"Saving centrality measures to {centrality_file}...")
+        with open(centrality_file, 'wb') as f:
+            pickle.dump(centrality_measures, f)
+        print("Centrality measures saved.")
 
     plot_centrality_histograms({'degree': centrality_measures['degree'],
                                 'closeness': centrality_measures['closeness'],
