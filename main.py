@@ -10,6 +10,18 @@ import pandas as pd
 import powerlaw
 
 
+def print_task_header(task_num, task_name):
+    """Print a formatted task header."""
+    print(f"\n{'='*50}")
+    print(f"Task {task_num}: {task_name}")
+    print(f"{'='*50}")
+
+
+def print_subtask(subtask_letter, subtask_name):
+    """Print a formatted subtask header."""
+    print(f"\n  Part {subtask_letter.upper()}: {subtask_name}")
+
+
 def print_result(label, value, indent=4):
     """Print a formatted result with appropriate indentation."""
     spaces = " " * indent
@@ -111,6 +123,9 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85):
     Returns:
         NetworkX graph of food items
     """
+
+    print_task_header(1, "Load the Fineli dataset")
+
     # Load and preprocess data (using function from previous step)
     data = load_fineli_data(data_dir)
     food_nutrients = data["food_nutrients"]
@@ -146,6 +161,8 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85):
 
     # Calculate cosine similarity matrix
     similarity_matrix = cosine_similarity(normalized_nutrients)
+
+    print_task_header(2, "Generate a nutritional network graph")
 
     # Create a new graph
     G = nx.Graph()
@@ -431,26 +448,8 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
 # Example usage
 if __name__ == "__main__":
     # Define file paths for storing the data
-    graph_data_file = "tmp/graph_data.pkl"
-    centrality_file = "tmp/centrality_measures.pkl"
 
-    # Load or calculate graph_data
-    if os.path.exists(graph_data_file):
-        print(f"Loading graph data from {graph_data_file}...")
-        with open(graph_data_file, "rb") as f:
-            graph_data = pickle.load(f)
-        G = graph_data["graph"]
-        print("Graph data loaded.")
-    else:
-        print("Calculating graph data...")
-        graph_data = create_nutritional_network(
-            "Fineli_Rel20", similarity_threshold=0.99
-        )
-        G = graph_data["graph"]
-        print(f"Saving graph data to {graph_data_file}...")
-        with open(graph_data_file, "wb") as f:
-            pickle.dump(graph_data, f)
-        print("Graph data saved.")
+    print_task_header(3, "Visualize and plot the degree distribution")
 
     # Load or calculate centrality_measures
     if os.path.exists(centrality_file):
@@ -476,10 +475,16 @@ if __name__ == "__main__":
         save_dir="plots/centrality",
     )
 
+    print_task_header(4, "Provide the script for drawing power law distributions")
+
     results = analyze_centrality_power_law(
         centrality_measures, save_dir="plots/powerlaw"
     )
 
+    print_task_header(
+        5,
+        "Utilize the NetworkX clustering function to calculate the clustering coefficient",
+    )
     node_clustering_coefficients = nx.clustering(G)
 
     clustering_values = list(node_clustering_coefficients.values())
