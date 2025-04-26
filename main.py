@@ -8,6 +8,57 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import powerlaw
+from typing import Dict, Any, Callable, List, Optional, Tuple
+
+
+def load_or_calculate(
+    file_path: str,
+    calculate_func: Callable,
+    calculate_args: Optional[List] = None,
+    calculate_kwargs: Optional[Dict] = None,
+    description: str = "data",
+    post_process_func: Optional[Callable] = None,
+) -> Any:
+    """
+    Load data from file if it exists, otherwise calculate and save it.
+
+    Args:
+        file_path: Path to the pickle file
+        calculate_func: Function to call if data needs to be calculated
+        calculate_args: Positional arguments for calculate_func
+        calculate_kwargs: Keyword arguments for calculate_func
+        description: Description of the data being processed (for logging)
+        post_process_func: Optional function to process result before saving
+
+    Returns:
+        The loaded or calculated data
+    """
+    calculate_args = calculate_args or []
+    calculate_kwargs = calculate_kwargs or {}
+
+    if os.path.exists(file_path):
+        print(f"Loading {description} from {file_path}...")
+        with open(file_path, "rb") as f:
+            data = pickle.load(f)
+        print(f"{description.capitalize()} loaded.")
+    else:
+        print(f"Calculating {description}...")
+        data = calculate_func(*calculate_args, **calculate_kwargs)
+
+        # Apply post-processing if specified
+        if post_process_func:
+            data = post_process_func(data)
+
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        print(f"Saving {description} to {file_path}...")
+        with open(file_path, "wb") as f:
+            pickle.dump(data, f)
+        print(f"{description.capitalize()} saved.")
+
+    return data
+
 
 
 def print_task_header(task_num, task_name):
@@ -448,22 +499,32 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
 # Example usage
 if __name__ == "__main__":
     # Define file paths for storing the data
+    DATA_DIR = "tmp"
+    FILES = {
+        "graph_data": os.path.join(DATA_DIR, "graph_data.pkl"),
+        "centrality": os.path.join(DATA_DIR, "centrality_measures.pkl"),
+    }
+
+    # Load or calculate graph data
+    graph_data = load_or_calculate(
+        FILES["graph_data"],
+        create_nutritional_network,
+        calculate_args=["Fineli_Rel20"],
+        calculate_kwargs={"similarity_threshold": 0.99},
+        description="graph data",
+    )
+    G = graph_data["graph"]
 
     print_task_header(3, "Visualize and plot the degree distribution")
 
-    # Load or calculate centrality_measures
-    if os.path.exists(centrality_file):
-        print(f"Loading centrality measures from {centrality_file}...")
-        with open(centrality_file, "rb") as f:
-            centrality_measures = pickle.load(f)
-        print("Centrality measures loaded.")
-    else:
-        print("Calculating centrality measures...")
-        centrality_measures = calculate_centralities(G, use_approximation=False)
-        print(f"Saving centrality measures to {centrality_file}...")
-        with open(centrality_file, "wb") as f:
-            pickle.dump(centrality_measures, f)
-        print("Centrality measures saved.")
+    # Load or calculate centrality measures
+    centrality_measures = load_or_calculate(
+        FILES["centrality"],
+        calculate_centralities,
+        calculate_args=[G],
+        calculate_kwargs={"use_approximation": False},
+        description="centrality measures",
+    )
 
     plot_centrality_histograms(
         {
