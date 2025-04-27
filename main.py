@@ -13,6 +13,8 @@ from networkx.algorithms.community.centrality import girvan_newman
 from networkx.algorithms.community import louvain_communities
 import seaborn as sns
 
+SHOW_PLOT = False
+
 
 def load_component_names(data_dir="."):
     """
@@ -468,7 +470,10 @@ def visualize_community_differences(
     plt.xticks(positions, nutrient_names, rotation=45, ha="right")
     plt.legend()
     plt.tight_layout()
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
+    else:
+        plt.close()
 
     # 2. HEATMAP: Show relative nutrient composition
     plt.figure(figsize=(12, 8))
@@ -498,7 +503,10 @@ def visualize_community_differences(
     )
     plt.title("Relative Nutrient Composition by Community (Normalized to Max Value)")
     plt.tight_layout()
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
+    else:
+        plt.close()
 
     # 3. RADAR CHART: Profile of each community
     # Only include if number of communities is manageable (≤ 6)
@@ -550,7 +558,10 @@ def visualize_community_differences(
         # Add legend
         plt.legend(loc="upper right", bbox_to_anchor=(0.1, 0.1))
         plt.title("Nutritional Profile of Food Communities (Normalized)")
-        plt.show()
+        if SHOW_PLOT:
+            plt.show()
+        else:
+            plt.close()
 
 
 def visualize_network(graph_data, max_nodes=100):
@@ -602,7 +613,10 @@ def visualize_network(graph_data, max_nodes=100):
     print("Network visualization saved as 'nutritional_network.png'")
 
     # Show plot
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
+    else:
+        plt.close()
 
 
 def calculate_centralities(
@@ -684,8 +698,10 @@ def plot_centrality_histograms(
         plt.tight_layout()
         filename = f"{save_dir}/combined_centrality_{network_name.lower().replace(' ', '_')}.png"
         plt.savefig(filename)
-
-        plt.show()
+        if SHOW_PLOT:
+            plt.show()
+        else:
+            plt.close()
 
 
 def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plots"):
@@ -839,7 +855,10 @@ def plot_communities(G, communities, title):
     plt.title(title)
     plt.axis("off")
     plt.tight_layout()
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
+    else:
+        plt.close()
 
 
 def calculate_community_stats(G, communities):
@@ -1134,7 +1153,7 @@ if __name__ == "__main__":
     print_task_header(4, "Provide the script for drawing power law distributions")
 
     results = analyze_centrality_power_law(
-        centrality_measures, save_dir="plots/powerlaw"
+        centrality_measures, show_plot=SHOW_PLOT, save_dir="plots/powerlaw"
     )
 
     print_task_header(
@@ -1160,7 +1179,10 @@ if __name__ == "__main__":
     plt.ylabel("Number of Nodes (Count)")
     plt.grid(axis="y", linestyle="--")
 
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
+    else:
+        plt.close()
 
     print_task_header(6, "Detect communities within the nutritional network")
 
@@ -1182,12 +1204,13 @@ if __name__ == "__main__":
         description="Louvain communities",
     )
 
-    # plot_communities(
-    #     G, gn_communities, "Communities detected by Girvan-Newman algorithm"
-    # )
-    plot_communities(
-        G, louvain_communities, "Communities detected by Louvain algorithm"
-    )
+    if SHOW_PLOT:
+        # plot_communities(
+        #     G, gn_communities, "Communities detected by Girvan-Newman algorithm"
+        # )
+        plot_communities(
+            G, louvain_communities, "Communities detected by Louvain algorithm"
+        )
 
     # print_result(
     #     label="Girvan-Newman Communities Statistics:",
