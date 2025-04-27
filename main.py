@@ -208,7 +208,7 @@ def load_fineli_data(data_dir="."):
     }
 
 
-def create_nutritional_network(data_dir=".", similarity_threshold=0.85):
+def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted=False):
     """
     Creates a nutritional network graph where:
     - Nodes represent food items
@@ -269,12 +269,20 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85):
     for i, (food_id, food_name) in enumerate(zip(food_ids, food_names)):
         G.add_node(food_id, name=food_name)
 
-    # Add edges based on similarity threshold
-    for i in range(len(food_ids)):
-        for j in range(i + 1, len(food_ids)):
-            similarity = similarity_matrix[i, j]
-            if similarity >= similarity_threshold:
-                G.add_edge(food_ids[i], food_ids[j], weight=similarity)
+    if weighted:
+        # Add edges based on similarity threshold
+        for i in range(len(food_ids)):
+            for j in range(i + 1, len(food_ids)):
+                similarity = similarity_matrix[i, j]
+                if similarity >= similarity_threshold:
+                    G.add_edge(food_ids[i], food_ids[j])
+    else:
+        # Add edges based on similarity with weights
+        for i in range(len(food_ids)):
+            for j in range(i + 1, len(food_ids)):
+                similarity = similarity_matrix[i, j]
+                if similarity >= similarity_threshold:
+                    G.add_edge(food_ids[i], food_ids[j], weight=similarity)
 
     print(
         f"Created graph with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges"
@@ -1107,7 +1115,9 @@ def analyze_top_food_characteristics(graph_data, community_top_foods, component_
     return analysis_results
 
 
-def initialize_data(data_dir="tmp", dataset="Fineli_Rel20", similarity_threshold=0.80):
+def initialize_data(
+    data_dir="tmp", dataset="Fineli_Rel20", similarity_threshold=0.80, weighted=False
+):
     """Initialize data directory and create file paths for storing data."""
     os.makedirs(data_dir, exist_ok=True)
     files = {
@@ -1123,7 +1133,10 @@ def initialize_data(data_dir="tmp", dataset="Fineli_Rel20", similarity_threshold
         files["graph_data"],
         create_nutritional_network,
         calculate_args=[dataset],
-        calculate_kwargs={"similarity_threshold": similarity_threshold},
+        calculate_kwargs={
+            "similarity_threshold": similarity_threshold,
+            "weighted": weighted,
+        },
         description="graph data",
     )
 
@@ -1191,7 +1204,7 @@ def analyze_clustering(G, files, show_plot=False):
     return node_clustering_coefficients
 
 
-def detect_communities(G, files):
+def detect_communities(G, files, show_plot=False):
     """Detect communities using Girvan-Newman and Louvain algorithms."""
     print_task_header(6, "Detect communities within the nutritional network")
 
@@ -1214,10 +1227,11 @@ def detect_communities(G, files):
     )
 
     # Visualize communities
-    plot_communities(
-        G, gn_communities, "Communities detected by Girvan-Newman algorithm"
-    )
-    plot_communities(G, louvain_comms, "Communities detected by Louvain algorithm")
+    if show_plot:
+        plot_communities(
+            G, gn_communities, "Communities detected by Girvan-Newman algorithm"
+        )
+        plot_communities(G, louvain_comms, "Communities detected by Louvain algorithm")
 
     # Display community statistics
     print_result(
@@ -1308,11 +1322,17 @@ def display_results(
 
 
 def run_nutritional_network_analysis(
-    data_dir="tmp", dataset="Fineli_Rel20", similarity_threshold=0.80, show_plot=False
+    data_dir="tmp",
+    dataset="Fineli_Rel20",
+    similarity_threshold=0.80,
+    show_plot=False,
+    weighted=False,
 ):
     """Main function to run the complete nutritional network analysis."""
     # Initialize data
-    files, graph_data = initialize_data(data_dir, dataset, similarity_threshold)
+    files, graph_data = initialize_data(
+        data_dir, dataset, similarity_threshold, weighted
+    )
     G = graph_data["graph"]
 
     # Analyze centrality
@@ -1351,13 +1371,24 @@ if __name__ == "__main__":
     # Define constants
     SHOW_PLOT = False
     DATA_DIR = "tmp"
+    DATA_DIR_WEIGHTED = "tmp_weighted"
     DATASET = "Fineli_Rel20"
     SIMILARITY_THRESHOLD = 0.80
 
     # Run analysis with default parameters
-    run_nutritional_network_analysis(
+    network_analysis = run_nutritional_network_analysis(
         data_dir=DATA_DIR,
         dataset=DATASET,
         similarity_threshold=SIMILARITY_THRESHOLD,
         show_plot=SHOW_PLOT,
+    )
+
+    print_task_header(9, "Repeat 3-8 with weighted graph")
+    # Run analysis with weighted parameters
+    weighted_network_analysis = run_nutritional_network_analysis(
+        data_dir=DATA_DIR,
+        dataset=DATASET,
+        similarity_threshold=SIMILARITY_THRESHOLD,
+        show_plot=SHOW_PLOT,
+        weighted=True,
     )
