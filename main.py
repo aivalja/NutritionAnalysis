@@ -1376,7 +1376,7 @@ if __name__ == "__main__":
     print_task_header(9, "Repeat 3-8 with weighted graph")
     # Run analysis with weighted parameters
     weighted_network_analysis = run_nutritional_network_analysis(
-        data_dir=DATA_DIR,
+        data_dir=DATA_DIR_WEIGHTED,
         dataset=DATASET,
         similarity_threshold=SIMILARITY_THRESHOLD,
         show_plot=SHOW_PLOT,
