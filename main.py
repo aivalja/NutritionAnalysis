@@ -14,6 +14,7 @@ from networkx.algorithms.community import louvain_communities
 import seaborn as sns
 
 SHOW_PLOT = False
+default_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC", "VITC"]
 
 
 def load_component_names(data_dir="."):
@@ -297,7 +298,9 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
     }
 
 
-def analyze_community_nutrition(graph_data, communities, data_dir="."):
+def analyze_community_nutrition(
+    graph_data, communities, data_dir=".", key_nutrients=default_nutrients
+):
     """
     Analyzes the nutritional composition of each community with proper nutrient names.
 
@@ -317,25 +320,6 @@ def analyze_community_nutrition(graph_data, communities, data_dir="."):
 
     # Fill any remaining NaN values with 0 to ensure calculations work correctly
     food_nutrients = food_nutrients.fillna(0)
-
-    # Key nutritional attributes to analyze
-    key_nutrients = [
-        col
-        for col in food_nutrients.columns
-        if col
-        not in [
-            "FOODID",
-            "FOODNAME",
-            "FOODTYPE",
-            "PROCESS",
-            "EDPORT",
-            "IGCLASS",
-            "IGCLASSP",
-            "FUCLASS",
-            "FUCLASSP",
-        ]
-        and pd.api.types.is_numeric_dtype(food_nutrients[col])
-    ]
 
     # Create a DataFrame to store community nutrition information
     community_nutrition = []
@@ -369,7 +353,7 @@ def analyze_community_nutrition(graph_data, communities, data_dir="."):
 
 
 def create_community_summary_table(
-    community_nutrition, component_names, key_nutrients=None
+    community_nutrition, component_names, key_nutrients=default_nutrients
 ):
     """
     Creates a summary table of key nutritional values across communities.
@@ -377,16 +361,13 @@ def create_community_summary_table(
     Args:
         community_nutrition: DataFrame with community nutritional data
         component_names: Dictionary mapping component codes to readable names
-        key_nutrients: List of nutrient codes to include (default: top 5 important nutrients)
+        key_nutrients: List of nutrient codes to include
 
     Returns:
         Formatted summary DataFrame
     """
-    if key_nutrients is None:
-        # Default key nutrients if not specified
-        key_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC"]
 
-    # Filter nutrients that exist in our data
+    # Filter nutrients that exist in our datakey_nutrients
     available_nutrients = [n for n in key_nutrients if n in community_nutrition.columns]
 
     # Create a new DataFrame for the summary
@@ -411,7 +392,9 @@ def create_community_summary_table(
 
 
 def visualize_community_differences(
-    community_nutrition, component_names, key_nutrients=None
+    community_nutrition,
+    component_names,
+    key_nutrients=default_nutrients,
 ):
     """
     Creates visualizations comparing nutritional differences between communities.
@@ -419,12 +402,8 @@ def visualize_community_differences(
     Args:
         community_nutrition: DataFrame with community nutritional data
         component_names: Dictionary mapping component codes to readable names
-        key_nutrients: List of nutrient codes to include (default: automatically selected)
+        key_nutrients: List of nutrient codes to include
     """
-    # Select key nutrients if not provided
-    if key_nutrients is None:
-        # Use 6 important nutrients that are likely to differentiate food groups
-        key_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC", "VITC"]
 
     # Filter to nutrients that exist in our data
     available_nutrients = [n for n in key_nutrients if n in community_nutrition.columns]
@@ -970,7 +949,9 @@ def find_top_similar_foods_in_communities(graph_data, communities, top_n=10):
     return community_top_foods
 
 
-def analyze_top_food_characteristics(graph_data, community_top_foods, component_names):
+def analyze_top_food_characteristics(
+    graph_data, community_top_foods, component_names, key_nutrients=default_nutrients
+):
     """
     Analyzes characteristics of top similar food items in each community to identify trends.
     Uses normalized values to determine dominant characteristics.
@@ -984,63 +965,6 @@ def analyze_top_food_characteristics(graph_data, community_top_foods, component_
         Dictionary with community ID as key and analysis summary as value
     """
     food_nutrients = graph_data["food_nutrients"]
-    # key_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC"]
-    key_nutrients = [
-        "ALC",
-        "CA",
-        "CAROTENS",
-        "CHOAVL",
-        "CHOLE",
-        "ENERC",
-        "F18D2CN6",
-        "F18D3N3",
-        "F20D5N3",
-        "F22D6N3",
-        "FAFRE",
-        "FAMCIS",
-        "FAPU",
-        "FAPUN3",
-        "FAPUN6",
-        "FASAT",
-        "FAT",
-        "FATRN",
-        "FE",
-        "FIBC",
-        "FIBINS",
-        "FOL",
-        "FRUS",
-        "GALS",
-        "GLUS",
-        "ID",
-        "K",
-        "LACS",
-        "MALS",
-        "MG",
-        "NACL",
-        "NIA",
-        "NIAEQ",
-        "OA",
-        "P",
-        "PROT",
-        "PSACNCS",
-        "RIBF",
-        "SE",
-        "STARCH",
-        "STERT",
-        "SUCS",
-        "SUGAR",
-        "SUGOH",
-        "THIA",
-        "TRP",
-        "VITA",
-        "VITB12",
-        "VITC",
-        "VITD",
-        "VITE",
-        "VITK",
-        "VITPYRID",
-        "ZN",
-    ]
 
     # Calculate global averages for normalization
     global_avg = food_nutrients[key_nutrients].mean()
@@ -1246,33 +1170,39 @@ def detect_communities(G, files, show_plot=False):
     return gn_communities, louvain_comms
 
 
-def analyze_nutritional_composition(graph_data, communities, dataset):
+def analyze_nutritional_composition(
+    graph_data, communities, dataset, key_nutrients=default_nutrients
+):
     """Analyze the nutritional composition of communities."""
     print_task_header(7, "Analyze Community Nutritional Composition")
 
     community_nutrition, component_names = analyze_community_nutrition(
-        graph_data, communities, dataset
+        graph_data, communities, dataset, key_nutrients
     )
 
     # Generate summary table
     print("\nSummary Table of Community Nutritional Differences:")
-    summary_table = create_community_summary_table(community_nutrition, component_names)
+    summary_table = create_community_summary_table(
+        community_nutrition, component_names, key_nutrients
+    )
     print(summary_table)
 
     # Visualize differences
     print("\nGenerating visualizations to compare communities...")
-    visualize_community_differences(community_nutrition, component_names)
+    visualize_community_differences(community_nutrition, component_names, key_nutrients)
 
     return community_nutrition, component_names
 
 
-def analyze_top_similar_foods(graph_data, communities, component_names):
+def analyze_top_similar_foods(
+    graph_data, communities, component_names, key_nutrients=default_nutrients
+):
     """Find and analyze the top similar foods within communities."""
     community_top_foods = find_top_similar_foods_in_communities(graph_data, communities)
 
     print_task_header(8, "Identify the top-10 most similar food items")
     top_food_analysis = analyze_top_food_characteristics(
-        graph_data, community_top_foods, component_names
+        graph_data, community_top_foods, component_names, key_nutrients
     )
 
     print(f"Found {len(communities)} communities")
@@ -1327,6 +1257,7 @@ def run_nutritional_network_analysis(
     similarity_threshold=0.80,
     show_plot=False,
     weighted=False,
+    key_nutrients=default_nutrients,
 ):
     """Main function to run the complete nutritional network analysis."""
     # Initialize data
@@ -1346,7 +1277,7 @@ def run_nutritional_network_analysis(
 
     # Analyze nutritional composition
     community_nutrition, component_names = analyze_nutritional_composition(
-        graph_data, louvain_comms, dataset
+        graph_data, louvain_comms, dataset, key_nutrients
     )
 
     # Analyze similar foods
@@ -1375,12 +1306,71 @@ if __name__ == "__main__":
     DATASET = "Fineli_Rel20"
     SIMILARITY_THRESHOLD = 0.80
 
+    # Key nutritional attributes to analyze
+    key_nutrients = [
+        "ALC",
+        "CA",
+        "CAROTENS",
+        "CHOAVL",
+        "CHOLE",
+        "ENERC",
+        "F18D2CN6",
+        "F18D3N3",
+        "F20D5N3",
+        "F22D6N3",
+        "FAFRE",
+        "FAMCIS",
+        "FAPU",
+        "FAPUN3",
+        "FAPUN6",
+        "FASAT",
+        "FAT",
+        "FATRN",
+        "FE",
+        "FIBC",
+        "FIBINS",
+        "FOL",
+        "FRUS",
+        "GALS",
+        "GLUS",
+        "ID",
+        "K",
+        "LACS",
+        "MALS",
+        "MG",
+        "NACL",
+        "NIA",
+        "NIAEQ",
+        "OA",
+        "P",
+        "PROT",
+        "PSACNCS",
+        "RIBF",
+        "SE",
+        "STARCH",
+        "STERT",
+        "SUCS",
+        "SUGAR",
+        "SUGOH",
+        "THIA",
+        "TRP",
+        "VITA",
+        "VITB12",
+        "VITC",
+        "VITD",
+        "VITE",
+        "VITK",
+        "VITPYRID",
+        "ZN",
+    ]
+
     # Run analysis with default parameters
     network_analysis = run_nutritional_network_analysis(
         data_dir=DATA_DIR,
         dataset=DATASET,
         similarity_threshold=SIMILARITY_THRESHOLD,
         show_plot=SHOW_PLOT,
+        key_nutrients=key_nutrients,
     )
 
     print_task_header(9, "Repeat 3-8 with weighted graph")
@@ -1391,4 +1381,5 @@ if __name__ == "__main__":
         similarity_threshold=SIMILARITY_THRESHOLD,
         show_plot=SHOW_PLOT,
         weighted=True,
+        key_nutrients=key_nutrients,
     )
