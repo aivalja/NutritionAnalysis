@@ -1107,33 +1107,35 @@ def analyze_top_food_characteristics(graph_data, community_top_foods, component_
     return analysis_results
 
 
-# Example usage
-if __name__ == "__main__":
-    # Define file paths for storing the data
-    DATA_DIR = "tmp"
-    FILES = {
-        "graph_data": os.path.join(DATA_DIR, "graph_data.pkl"),
-        "centrality": os.path.join(DATA_DIR, "centrality_measures.pkl"),
-        "gn_communities": os.path.join(DATA_DIR, "gn_communities.pkl"),
-        "louvain_communities": os.path.join(DATA_DIR, "louvain_communities.pkl"),
-        "clustering": os.path.join(DATA_DIR, "clustering.pkl"),
+def initialize_data(data_dir="tmp", dataset="Fineli_Rel20", similarity_threshold=0.80):
+    """Initialize data directory and create file paths for storing data."""
+    os.makedirs(data_dir, exist_ok=True)
+    files = {
+        "graph_data": os.path.join(data_dir, "graph_data.pkl"),
+        "centrality": os.path.join(data_dir, "centrality_measures.pkl"),
+        "gn_communities": os.path.join(data_dir, "gn_communities.pkl"),
+        "louvain_communities": os.path.join(data_dir, "louvain_communities.pkl"),
+        "clustering": os.path.join(data_dir, "clustering.pkl"),
     }
 
     # Load or calculate graph data
     graph_data = load_or_calculate(
-        FILES["graph_data"],
+        files["graph_data"],
         create_nutritional_network,
-        calculate_args=["Fineli_Rel20"],
-        calculate_kwargs={"similarity_threshold": 0.99},
+        calculate_args=[dataset],
+        calculate_kwargs={"similarity_threshold": similarity_threshold},
         description="graph data",
     )
-    G = graph_data["graph"]
 
+    return files, graph_data
+
+
+def analyze_centrality(G, files, show_plot=False):
+    """Analyze and visualize centrality measures."""
     print_task_header(3, "Visualize and plot the degree distribution")
 
-    # Load or calculate centrality measures
     centrality_measures = load_or_calculate(
-        FILES["centrality"],
+        files["centrality"],
         calculate_centralities,
         calculate_args=[G],
         calculate_kwargs={"use_approximation": False},
@@ -1151,18 +1153,22 @@ if __name__ == "__main__":
     )
 
     print_task_header(4, "Provide the script for drawing power law distributions")
-
     results = analyze_centrality_power_law(
-        centrality_measures, show_plot=SHOW_PLOT, save_dir="plots/powerlaw"
+        centrality_measures, show_plot=show_plot, save_dir="plots/powerlaw"
     )
 
+    return centrality_measures, results
+
+
+def analyze_clustering(G, files, show_plot=False):
+    """Analyze clustering coefficients in the network."""
     print_task_header(
         5,
         "Utilize the NetworkX clustering function to calculate the clustering coefficient",
     )
 
     node_clustering_coefficients = load_or_calculate(
-        FILES["clustering"],
+        files["clustering"],
         nx.clustering,
         calculate_args=[G],
         description="clustering",
@@ -1171,65 +1177,67 @@ if __name__ == "__main__":
     clustering_values = list(node_clustering_coefficients.values())
 
     plt.figure(figsize=(10, 6))
-    # Create the histogram with 10 bins
     plt.hist(clustering_values, bins=10, edgecolor="k", alpha=0.7)
-
     plt.title("Histogram of Node Clustering Coefficients")
     plt.xlabel("Clustering Coefficient")
     plt.ylabel("Number of Nodes (Count)")
     plt.grid(axis="y", linestyle="--")
 
-    if SHOW_PLOT:
+    if show_plot:
         plt.show()
     else:
         plt.close()
 
+    return node_clustering_coefficients
+
+
+def detect_communities(G, files):
+    """Detect communities using Girvan-Newman and Louvain algorithms."""
     print_task_header(6, "Detect communities within the nutritional network")
 
-    # # Load or calculate gn communities
-    # gn_communities = load_or_calculate(
-    #     FILES["gn_communities"],
-    #     girvan_newman,
-    #     calculate_args=[G],
-    #     description="GN communities",
-    #     post_process_func=lambda gen: process_girvan_newman(gen, max_communities=500),
-    # )
+    # Load or calculate Girvan-Newman communities
+    gn_communities = load_or_calculate(
+        files["gn_communities"],
+        girvan_newman,
+        calculate_args=[G],
+        description="GN communities",
+        post_process_func=lambda gen: process_girvan_newman(gen, max_communities=500),
+    )
 
-    # Load or calculate louvain communities
-    louvain_communities = load_or_calculate(
-        FILES["louvain_communities"],
+    # Load or calculate Louvain communities
+    louvain_comms = load_or_calculate(
+        files["louvain_communities"],
         louvain_communities,
         calculate_args=[G],
         calculate_kwargs={"weight": "weight"},
         description="Louvain communities",
     )
 
-    if SHOW_PLOT:
-        # plot_communities(
-        #     G, gn_communities, "Communities detected by Girvan-Newman algorithm"
-        # )
-        plot_communities(
-            G, louvain_communities, "Communities detected by Louvain algorithm"
-        )
-
-    # print_result(
-    #     label="Girvan-Newman Communities Statistics:",
-    #     value=calculate_community_stats(G, gn_communities),
-    #     indent=6,
-    # )
-
-    print_result(
-        label="Louvain Communities Statistics:\n",
-        value="",
-        indent=0,
+    # Visualize communities
+    plot_communities(
+        G, gn_communities, "Communities detected by Girvan-Newman algorithm"
     )
-    print("Louvain Communities Statistics:")
-    print(calculate_community_stats(G, louvain_communities))
+    plot_communities(G, louvain_comms, "Communities detected by Louvain algorithm")
 
-    # Analyze nutritional composition of communities
+    # Display community statistics
+    print_result(
+        label="Girvan-Newman Communities Statistics:",
+        value=calculate_community_stats(G, gn_communities),
+        indent=6,
+    )
+
+    print("Louvain Communities Statistics:")
+    print(calculate_community_stats(G, louvain_comms))
+
+    return gn_communities, louvain_comms
+
+
+def analyze_nutritional_composition(graph_data, communities, dataset):
+    """Analyze the nutritional composition of communities."""
     print_task_header(7, "Analyze Community Nutritional Composition")
+
     community_nutrition, component_names = analyze_community_nutrition(
-        graph_data, louvain_communities, "Fineli_Rel20"
+        graph_data, communities, dataset
     )
 
     # Generate summary table
@@ -1237,32 +1245,41 @@ if __name__ == "__main__":
     summary_table = create_community_summary_table(community_nutrition, component_names)
     print(summary_table)
 
-    # Visualize the differences between communities
+    # Visualize differences
     print("\nGenerating visualizations to compare communities...")
     visualize_community_differences(community_nutrition, component_names)
 
-    # Find most similar foods within each community
-    community_top_foods = find_top_similar_foods_in_communities(
-        graph_data, louvain_communities
-    )
+    return community_nutrition, component_names
 
-    # Analyze characteristics of similar foods
-    print_task_header(8, "Idetify the top-10 most similar food items")
+
+def analyze_top_similar_foods(graph_data, communities, component_names):
+    """Find and analyze the top similar foods within communities."""
+    community_top_foods = find_top_similar_foods_in_communities(graph_data, communities)
+
+    print_task_header(8, "Identify the top-10 most similar food items")
     top_food_analysis = analyze_top_food_characteristics(
         graph_data, community_top_foods, component_names
     )
 
-    # Display results
-    print(f"Found {len(louvain_communities)} communities")
+    print(f"Found {len(communities)} communities")
 
+    return community_top_foods, top_food_analysis
+
+
+def display_results(
+    community_nutrition, component_names, community_top_foods, top_food_analysis
+):
+    """Display the analysis results in a readable format."""
     # Display key nutrients for communities
     key_display_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC"]
     print("\nCommunity Nutritional Analysis:")
     print("-" * 80)
+
     for _, row in community_nutrition.iterrows():
         comm_id = int(row["community_id"])
         print(f"Community {comm_id} (Size: {int(row['size'])} foods)")
         print(f"Examples: {row['food_examples']}")
+
         for nutrient_code in key_display_nutrients:
             if nutrient_code in row:
                 nutrient_name = component_names.get(nutrient_code, nutrient_code)
@@ -1272,26 +1289,75 @@ if __name__ == "__main__":
     # Display top foods analysis
     print("\nTop Similar Foods Analysis Within Communities (Top 10 Foods):")
     print("-" * 80)
+
     for comm_id, analysis in top_food_analysis.items():
         print(f"Community {comm_id}")
         print(f"  {analysis['summary']}")
+
         for trend in analysis["trends"]:
             print(f"  {trend}")
 
-        # Show a few example top foods
+        # Show examples
         if comm_id in community_top_foods and community_top_foods[comm_id]:
             print("  Example top similar foods:")
             for food in community_top_foods[comm_id][:3]:
                 print(
-                    f"    - {food['food_name']} "
-                    f"(Avg Similarity: {food['avg_similarity']:.3f})"
+                    f"    - {food['food_name']} (Avg Similarity: {food['avg_similarity']:.3f})"
                 )
         print("-" * 80)
 
-    # return {
-    #     "communities": communities,
-    #     "nutrition_analysis": community_nutrition,
-    #     "component_names": component_names,
-    #     "community_top_foods": community_top_foods,
-    #     "top_food_analysis": top_food_analysis
-    # }
+
+def run_nutritional_network_analysis(
+    data_dir="tmp", dataset="Fineli_Rel20", similarity_threshold=0.80, show_plot=False
+):
+    """Main function to run the complete nutritional network analysis."""
+    # Initialize data
+    files, graph_data = initialize_data(data_dir, dataset, similarity_threshold)
+    G = graph_data["graph"]
+
+    # Analyze centrality
+    centrality_measures, _ = analyze_centrality(G, files, show_plot)
+
+    # Analyze clustering
+    analyze_clustering(G, files, show_plot)
+
+    # Detect communities
+    gn_communities, louvain_comms = detect_communities(G, files)
+
+    # Analyze nutritional composition
+    community_nutrition, component_names = analyze_nutritional_composition(
+        graph_data, louvain_comms, dataset
+    )
+
+    # Analyze similar foods
+    community_top_foods, top_food_analysis = analyze_top_similar_foods(
+        graph_data, louvain_comms, component_names
+    )
+
+    # Display results
+    display_results(
+        community_nutrition, component_names, community_top_foods, top_food_analysis
+    )
+
+    return {
+        "graph": G,
+        "centrality_measures": centrality_measures,
+        "communities": louvain_comms,
+        "community_nutrition": community_nutrition,
+    }
+
+
+if __name__ == "__main__":
+    # Define constants
+    SHOW_PLOT = False
+    DATA_DIR = "tmp"
+    DATASET = "Fineli_Rel20"
+    SIMILARITY_THRESHOLD = 0.80
+
+    # Run analysis with default parameters
+    run_nutritional_network_analysis(
+        data_dir=DATA_DIR,
+        dataset=DATASET,
+        similarity_threshold=SIMILARITY_THRESHOLD,
+        show_plot=SHOW_PLOT,
+    )
