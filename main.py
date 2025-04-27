@@ -1,6 +1,7 @@
 import random
 import os
 import pickle
+from typing import Dict, Any, Callable, List, Optional, Tuple
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
@@ -503,6 +504,7 @@ if __name__ == "__main__":
     FILES = {
         "graph_data": os.path.join(DATA_DIR, "graph_data.pkl"),
         "centrality": os.path.join(DATA_DIR, "centrality_measures.pkl"),
+        "clustering": os.path.join(DATA_DIR, "clustering.pkl"),
     }
 
     # Load or calculate graph data
@@ -546,7 +548,13 @@ if __name__ == "__main__":
         5,
         "Utilize the NetworkX clustering function to calculate the clustering coefficient",
     )
-    node_clustering_coefficients = nx.clustering(G)
+
+    node_clustering_coefficients = load_or_calculate(
+        FILES["clustering"],
+        nx.clustering,
+        calculate_args=[G],
+        description="clustering",
+    )
 
     clustering_values = list(node_clustering_coefficients.values())
 
