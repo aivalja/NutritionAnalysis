@@ -9,7 +9,8 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import powerlaw
-from typing import Dict, Any, Callable, List, Optional, Tuple
+from networkx.algorithms.community.centrality import girvan_newman
+from networkx.algorithms.community import louvain_communities
 
 
 def load_or_calculate(
@@ -60,6 +61,23 @@ def load_or_calculate(
 
     return data
 
+
+def process_girvan_newman(generator, max_communities=None):
+    """
+    Convert Girvan-Newman generator to a list of communities.
+
+    Args:
+        generator: Girvan-Newman generator
+        max_communities: Maximum number of community sets to generate
+
+    Returns:
+        List of community sets (each set is a tuple of frozensets)
+    """
+    # Take a limited number of community divisions
+    if max_communities:
+        return [next(generator) for _ in range(max_communities)]
+    # Convert entire generator to list (may be large!)
+    return list(generator)
 
 
 def print_task_header(task_num, task_name):
@@ -497,6 +515,84 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
     return results
 
 
+def plot_communities(G, communities, title):
+    plt.figure(figsize=(12, 8))
+
+    # Map nodes to their community
+    community_map = {}
+    for i, comm in enumerate(communities):
+        for node in comm:
+            community_map[node] = i
+
+    # Colors for each community
+    colors = plt.cm.rainbow(np.linspace(0, 1, len(communities)))
+    node_colors = [colors[community_map[node]] for node in G.nodes()]
+
+    # Position nodes using spring layout
+    pos = nx.spring_layout(G, seed=42)
+
+    # Draw the graph
+    nx.draw_networkx(
+        G,
+        pos=pos,
+        node_color=node_colors,
+        with_labels=True,
+        node_size=100,
+        font_size=8,
+        edge_color="gray",
+        alpha=0.8,
+    )
+
+    plt.title(title)
+    plt.axis("off")
+    plt.tight_layout()
+    plt.show()
+
+
+def calculate_community_stats(G, communities):
+    stats = []
+
+    for i, comm in tqdm(enumerate(communities)):
+        print(i)
+        # Create subgraph for this community
+        subgraph = G.subgraph(comm)
+
+        # Basic statistics
+        num_nodes = len(subgraph.nodes())
+        num_edges = len(subgraph.edges())
+
+        # Handle connected and disconnected graphs differently
+        if nx.is_connected(subgraph):
+            diameter = nx.diameter(subgraph)
+            avg_path_length = nx.average_shortest_path_length(subgraph)
+        else:
+            # For disconnected graphs, use largest connected component
+            largest_cc = max(nx.connected_components(subgraph), key=len)
+            largest_subgraph = subgraph.subgraph(largest_cc)
+            diameter = nx.diameter(largest_subgraph)
+            avg_path_length = nx.average_shortest_path_length(largest_subgraph)
+            # Note with asterisk that this is based on largest component
+            diameter = f"{diameter}*"
+            avg_path_length = f"{avg_path_length:.2f}*"
+
+        # Calculate average degree
+        degrees = [d for n, d in subgraph.degree()]
+        avg_degree = sum(degrees) / len(degrees) if degrees else 0
+
+        stats.append(
+            {
+                "Community": i + 1,
+                "Nodes": num_nodes,
+                "Edges": num_edges,
+                "Diameter": diameter,
+                "Avg Path Length": avg_path_length,
+                "Avg Degree": f"{avg_degree:.2f}",
+            }
+        )
+
+    return pd.DataFrame(stats)
+
+
 # Example usage
 if __name__ == "__main__":
     # Define file paths for storing the data
@@ -504,6 +600,8 @@ if __name__ == "__main__":
     FILES = {
         "graph_data": os.path.join(DATA_DIR, "graph_data.pkl"),
         "centrality": os.path.join(DATA_DIR, "centrality_measures.pkl"),
+        "gn_communities": os.path.join(DATA_DIR, "gn_communities.pkl"),
+        "louvain_communities": os.path.join(DATA_DIR, "louvain_communities.pkl"),
         "clustering": os.path.join(DATA_DIR, "clustering.pkl"),
     }
 
@@ -568,3 +666,44 @@ if __name__ == "__main__":
     plt.grid(axis="y", linestyle="--")
 
     plt.show()
+
+    print_task_header(6, "Detect communities within the nutritional network")
+
+    # # Load or calculate gn communities
+    # gn_communities = load_or_calculate(
+    #     FILES["gn_communities"],
+    #     girvan_newman,
+    #     calculate_args=[G],
+    #     description="GN communities",
+    #     post_process_func=lambda gen: process_girvan_newman(gen, max_communities=500),
+    # )
+
+    # Load or calculate louvain communities
+    louvain_communities = load_or_calculate(
+        FILES["louvain_communities"],
+        louvain_communities,
+        calculate_args=[G],
+        calculate_kwargs={"weight": "weight"},
+        description="Louvain communities",
+    )
+
+    # plot_communities(
+    #     G, gn_communities, "Communities detected by Girvan-Newman algorithm"
+    # )
+    plot_communities(
+        G, louvain_communities, "Communities detected by Louvain algorithm"
+    )
+
+    # print_result(
+    #     label="Girvan-Newman Communities Statistics:",
+    #     value=calculate_community_stats(G, gn_communities),
+    #     indent=6,
+    # )
+
+    print_result(
+        label="Louvain Communities Statistics:\n",
+        value="",
+        indent=0,
+    )
+    print("Louvain Communities Statistics:")
+    print(calculate_community_stats(G, louvain_communities))
