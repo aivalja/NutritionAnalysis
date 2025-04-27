@@ -11,6 +11,7 @@ import pandas as pd
 import powerlaw
 from networkx.algorithms.community.centrality import girvan_newman
 from networkx.algorithms.community import louvain_communities
+import seaborn as sns
 
 
 def load_component_names(data_dir="."):
@@ -885,6 +886,208 @@ def calculate_community_stats(G, communities):
     return pd.DataFrame(stats)
 
 
+def find_top_similar_foods_in_communities(graph_data, communities, top_n=10):
+    """
+    Identifies the top-N individual food items within each community based on average nutritional similarity
+    to other foods in the same community.
+
+    Args:
+        graph_data: Dictionary containing graph, food mapping, and similarity matrix
+        communities: List of communities (each community is a set of node IDs)
+        top_n: Number of top similar foods to return per community
+
+    Returns:
+        Dictionary with community ID as key and list of top similar foods as value
+    """
+    food_ids = list(graph_data["food_mapping"].keys())
+    similarity_matrix = graph_data["similarity_matrix"]
+    food_mapping = graph_data["food_mapping"]
+
+    # Dictionary to store results
+    community_top_foods = {}
+
+    # Process each community
+    for comm_id, community in enumerate(communities):
+        if len(community) < 2:
+            community_top_foods[comm_id] = []
+            continue
+
+        # Get indices of foods in this community
+        comm_indices = [
+            food_ids.index(food_id) for food_id in community if food_id in food_ids
+        ]
+
+        # Create list to store foods with their average similarity
+        food_avg_similarities = []
+
+        # Calculate average similarity for each food to others in community
+        for i in comm_indices:
+            food_id = food_ids[i]
+            # Get similarities to all other foods in community
+            similarities = [similarity_matrix[i][j] for j in comm_indices if j != i]
+            avg_similarity = (
+                sum(similarities) / len(similarities) if similarities else 0
+            )
+            food_avg_similarities.append(
+                {
+                    "food_id": food_id,
+                    "food_name": food_mapping[food_id],
+                    "avg_similarity": avg_similarity,
+                }
+            )
+
+        # Sort by average similarity and take top N
+        food_avg_similarities.sort(key=lambda x: x["avg_similarity"], reverse=True)
+        community_top_foods[comm_id] = food_avg_similarities[:top_n]
+
+    return community_top_foods
+
+
+def analyze_top_food_characteristics(graph_data, community_top_foods, component_names):
+    """
+    Analyzes characteristics of top similar food items in each community to identify trends.
+    Uses normalized values to determine dominant characteristics.
+
+    Args:
+        graph_data: Dictionary containing graph, food mapping, and nutritional data
+        community_top_foods: Dictionary with community ID and list of top similar foods
+        component_names: Dictionary mapping component codes to readable names
+
+    Returns:
+        Dictionary with community ID as key and analysis summary as value
+    """
+    food_nutrients = graph_data["food_nutrients"]
+    # key_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC"]
+    key_nutrients = [
+        "ALC",
+        "CA",
+        "CAROTENS",
+        "CHOAVL",
+        "CHOLE",
+        "ENERC",
+        "F18D2CN6",
+        "F18D3N3",
+        "F20D5N3",
+        "F22D6N3",
+        "FAFRE",
+        "FAMCIS",
+        "FAPU",
+        "FAPUN3",
+        "FAPUN6",
+        "FASAT",
+        "FAT",
+        "FATRN",
+        "FE",
+        "FIBC",
+        "FIBINS",
+        "FOL",
+        "FRUS",
+        "GALS",
+        "GLUS",
+        "ID",
+        "K",
+        "LACS",
+        "MALS",
+        "MG",
+        "NACL",
+        "NIA",
+        "NIAEQ",
+        "OA",
+        "P",
+        "PROT",
+        "PSACNCS",
+        "RIBF",
+        "SE",
+        "STARCH",
+        "STERT",
+        "SUCS",
+        "SUGAR",
+        "SUGOH",
+        "THIA",
+        "TRP",
+        "VITA",
+        "VITB12",
+        "VITC",
+        "VITD",
+        "VITE",
+        "VITK",
+        "VITPYRID",
+        "ZN",
+    ]
+
+    # Calculate global averages for normalization
+    global_avg = food_nutrients[key_nutrients].mean()
+
+    analysis_results = {}
+
+    for comm_id, top_foods in community_top_foods.items():
+        if not top_foods:
+            analysis_results[comm_id] = {
+                "summary": "Community too small for analysis",
+                "trends": [],
+            }
+            continue
+
+        # Get food IDs of top similar foods
+        food_ids_top = [food["food_id"] for food in top_foods]
+
+        # Get nutritional data for these foods
+        relevant_foods = food_nutrients[food_nutrients["FOODID"].isin(food_ids_top)]
+
+        # Calculate average values for key nutrients
+        avg_nutrients = relevant_foods[key_nutrients].mean()
+
+        # Identify dominant characteristics by relative value compared to global average
+        nutrient_values = []
+        for code in key_nutrients:
+            if not pd.isna(avg_nutrients[code]) and global_avg[code] > 0:
+                relative_value = avg_nutrients[code] / global_avg[code]
+                nutrient_values.append(
+                    (
+                        component_names.get(code, code),
+                        relative_value,
+                        avg_nutrients[code],
+                    )
+                )
+
+        # Sort by relative value (how much higher/lower than global average)
+        nutrient_values.sort(key=lambda x: x[1], reverse=True)
+        dominant_traits = [
+            f"{name}: {value:.2f} ({rel:.2f}x avg)"
+            for name, rel, value in nutrient_values[:2]
+        ]
+
+        # Look for common patterns in food names (simple keyword analysis)
+        food_names = relevant_foods["FOODNAME"].str.lower().tolist()
+        common_words = []
+        if food_names:
+            word_counts = {}
+            for name in food_names:
+                words = name.split()
+                for word in words:
+                    if len(word) > 3:  # Ignore very short words
+                        word_counts[word] = word_counts.get(word, 0) + 1
+            common_words = [
+                word
+                for word, count in sorted(
+                    word_counts.items(), key=lambda x: x[1], reverse=True
+                )
+                if count > len(food_names) * 0.1
+            ][:3]
+
+        analysis_results[comm_id] = {
+            "summary": f"Top similar foods characterized by {', '.join(dominant_traits)}",
+            "common_words": common_words,
+            "trends": [
+                f"Average similarity score of top foods: {sum(f['avg_similarity'] for f in top_foods) / len(top_foods):.3f}",
+                f"Common terms in names: {', '.join(common_words) if common_words else 'No common terms'}",
+            ],
+            "foods_count": len(top_foods),
+        }
+
+    return analysis_results
+
+
 # Example usage
 if __name__ == "__main__":
     # Define file paths for storing the data
@@ -1015,10 +1218,57 @@ if __name__ == "__main__":
     print("\nGenerating visualizations to compare communities...")
     visualize_community_differences(community_nutrition, component_names)
 
-    # # Return results for further analysis
+    # Find most similar foods within each community
+    community_top_foods = find_top_similar_foods_in_communities(
+        graph_data, louvain_communities
+    )
+
+    # Analyze characteristics of similar foods
+    print_task_header(8, "Idetify the top-10 most similar food items")
+    top_food_analysis = analyze_top_food_characteristics(
+        graph_data, community_top_foods, component_names
+    )
+
+    # Display results
+    print(f"Found {len(louvain_communities)} communities")
+
+    # Display key nutrients for communities
+    key_display_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC"]
+    print("\nCommunity Nutritional Analysis:")
+    print("-" * 80)
+    for _, row in community_nutrition.iterrows():
+        comm_id = int(row["community_id"])
+        print(f"Community {comm_id} (Size: {int(row['size'])} foods)")
+        print(f"Examples: {row['food_examples']}")
+        for nutrient_code in key_display_nutrients:
+            if nutrient_code in row:
+                nutrient_name = component_names.get(nutrient_code, nutrient_code)
+                print(f"  {nutrient_name}: {row[nutrient_code]:.2f}")
+        print("-" * 80)
+
+    # Display top foods analysis
+    print("\nTop Similar Foods Analysis Within Communities (Top 10 Foods):")
+    print("-" * 80)
+    for comm_id, analysis in top_food_analysis.items():
+        print(f"Community {comm_id}")
+        print(f"  {analysis['summary']}")
+        for trend in analysis["trends"]:
+            print(f"  {trend}")
+
+        # Show a few example top foods
+        if comm_id in community_top_foods and community_top_foods[comm_id]:
+            print("  Example top similar foods:")
+            for food in community_top_foods[comm_id][:3]:
+                print(
+                    f"    - {food['food_name']} "
+                    f"(Avg Similarity: {food['avg_similarity']:.3f})"
+                )
+        print("-" * 80)
+
     # return {
     #     "communities": communities,
     #     "nutrition_analysis": community_nutrition,
     #     "component_names": component_names,
-    #     "summary_table": summary_table,
+    #     "community_top_foods": community_top_foods,
+    #     "top_food_analysis": top_food_analysis
     # }
