@@ -296,7 +296,7 @@ def analyze_community_nutrition(graph_data, communities, data_dir="."):
         data_dir: Directory containing the CSV files
 
     Returns:
-        DataFrame containing average nutritional values for each community
+        DataFrame containing average nutritional values for each community and component names
     """
     G = graph_data["graph"]
     food_nutrients = graph_data["food_nutrients"]
@@ -354,11 +354,202 @@ def analyze_community_nutrition(graph_data, communities, data_dir="."):
     # Convert to DataFrame
     result_df = pd.DataFrame(community_nutrition)
 
-    # Final check for any NaNs that might have slipped through
-    result_df = result_df.fillna(0)
-
     return result_df, component_names
 
+
+def create_community_summary_table(
+    community_nutrition, component_names, key_nutrients=None
+):
+    """
+    Creates a summary table of key nutritional values across communities.
+
+    Args:
+        community_nutrition: DataFrame with community nutritional data
+        component_names: Dictionary mapping component codes to readable names
+        key_nutrients: List of nutrient codes to include (default: top 5 important nutrients)
+
+    Returns:
+        Formatted summary DataFrame
+    """
+    if key_nutrients is None:
+        # Default key nutrients if not specified
+        key_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC"]
+
+    # Filter nutrients that exist in our data
+    available_nutrients = [n for n in key_nutrients if n in community_nutrition.columns]
+
+    # Create a new DataFrame for the summary
+    summary_data = []
+
+    for _, row in community_nutrition.iterrows():
+        community_data = {
+            "Community": int(row["community_id"]),
+            "Size": int(row["size"]),
+            "Examples": row["food_examples"],
+        }
+
+        # Add nutrient values with proper names
+        for nutrient in available_nutrients:
+            nutrient_name = component_names.get(nutrient, nutrient)
+            community_data[nutrient_name] = row[nutrient]
+
+        summary_data.append(community_data)
+
+    summary_df = pd.DataFrame(summary_data)
+    return summary_df
+
+
+def visualize_community_differences(
+    community_nutrition, component_names, key_nutrients=None
+):
+    """
+    Creates visualizations comparing nutritional differences between communities.
+
+    Args:
+        community_nutrition: DataFrame with community nutritional data
+        component_names: Dictionary mapping component codes to readable names
+        key_nutrients: List of nutrient codes to include (default: automatically selected)
+    """
+    # Select key nutrients if not provided
+    if key_nutrients is None:
+        # Use 6 important nutrients that are likely to differentiate food groups
+        key_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC", "VITC"]
+
+    # Filter to nutrients that exist in our data
+    available_nutrients = [n for n in key_nutrients if n in community_nutrition.columns]
+
+    # Get proper names for nutrients
+    nutrient_names = [component_names.get(n, n) for n in available_nutrients]
+
+    # Create a copy of the data for plotting
+    plot_data = community_nutrition.copy()
+
+    # Normalize the data for each nutrient to range from 0 to 1
+    for nutrient in available_nutrients:
+        min_val = plot_data[nutrient].min()
+        max_val = plot_data[nutrient].max()
+        if max_val != min_val:  # Avoid division by zero
+            plot_data[nutrient] = (plot_data[nutrient] - min_val) / (max_val - min_val)
+        else:
+            plot_data[nutrient] = 0  # If all values are the same, set to 0
+
+    # 1. BAR CHART: Compare key nutrients across communities
+    plt.figure(figsize=(14, 8))
+
+    # Set up the number of bars and positions
+    n_communities = len(plot_data)
+    n_nutrients = len(available_nutrients)
+    bar_width = 0.8 / n_communities
+
+    # Create positions for each group of bars
+    positions = np.arange(n_nutrients)
+
+    # Plot bars for each community
+    for i, (_, row) in enumerate(plot_data.iterrows()):
+        community_id = int(row["community_id"])
+        offset = (i - n_communities / 2) * bar_width + bar_width / 2
+
+        # Get normalized values for this community
+        values = [row[nutrient] for nutrient in available_nutrients]
+
+        # Plot bars
+        plt.bar(
+            positions + offset,
+            values,
+            width=bar_width,
+            label=f"Community {community_id} (n={int(row['size'])})",
+        )
+
+    # Set labels and title
+    plt.xlabel("Nutrients")
+    plt.ylabel("Normalized Average Value (0 to 1)")
+    plt.title("Normalized Comparison of Key Nutrients Across Food Communities")
+    plt.xticks(positions, nutrient_names, rotation=45, ha="right")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # 2. HEATMAP: Show relative nutrient composition
+    plt.figure(figsize=(12, 8))
+
+    # Prepare data for heatmap
+    heatmap_data = plot_data[available_nutrients].copy()
+
+    # Normalize data (scale each nutrient relative to its maximum across communities)
+    for col in heatmap_data.columns:
+        max_val = heatmap_data[col].max()
+        if max_val > 0:  # Avoid division by zero
+            heatmap_data[col] = heatmap_data[col] / max_val
+
+    # Add community labels
+    heatmap_data["Community"] = plot_data["community_id"].apply(
+        lambda x: f"Community {int(x)}"
+    )
+    heatmap_data = heatmap_data.set_index("Community")
+
+    # Create heatmap
+    sns.heatmap(
+        heatmap_data,
+        cmap="YlGnBu",
+        annot=True,
+        fmt=".2f",
+        xticklabels=[component_names.get(n, n) for n in available_nutrients],
+    )
+    plt.title("Relative Nutrient Composition by Community (Normalized to Max Value)")
+    plt.tight_layout()
+    plt.show()
+
+    # 3. RADAR CHART: Profile of each community
+    # Only include if number of communities is manageable (≤ 6)
+    if n_communities <= 6:
+        # Prepare data for radar chart
+        radar_data = plot_data[available_nutrients].copy()
+
+        # Normalize data for radar chart
+        for col in radar_data.columns:
+            max_val = radar_data[col].max()
+            if max_val > 0:
+                radar_data[col] = radar_data[col] / max_val
+
+        # Number of variables
+        N = len(available_nutrients)
+
+        # Compute angle for each axis
+        angles = [n / float(N) * 2 * np.pi for n in range(N)]
+        angles += angles[:1]  # Close the loop
+
+        # Initialize the figure
+        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
+
+        # Add variable labels around the chart
+        plt.xticks(
+            angles[:-1],
+            [component_names.get(n, n) for n in available_nutrients],
+            color="grey",
+            size=10,
+        )
+
+        # Plot each community
+        for i, (idx, row) in enumerate(plot_data.iterrows()):
+            community_id = int(row["community_id"])
+
+            # Get normalized values for this community and close the loop
+            values = radar_data.iloc[i].values.tolist()
+            values += values[:1]
+
+            # Plot values
+            ax.plot(
+                angles,
+                values,
+                linewidth=2,
+                label=f"Community {community_id} (n={int(row['size'])})",
+            )
+            ax.fill(angles, values, alpha=0.1)
+
+        # Add legend
+        plt.legend(loc="upper right", bbox_to_anchor=(0.1, 0.1))
+        plt.title("Nutritional Profile of Food Communities (Normalized)")
+        plt.show()
 
 
 def visualize_network(graph_data, max_nodes=100):
@@ -653,7 +844,7 @@ def plot_communities(G, communities, title):
 def calculate_community_stats(G, communities):
     stats = []
 
-    for i, comm in tqdm(enumerate(communities)):
+    for i, comm in enumerate(communities):
         print(i)
         # Create subgraph for this community
         subgraph = G.subgraph(comm)
@@ -809,32 +1000,25 @@ if __name__ == "__main__":
     print("Louvain Communities Statistics:")
     print(calculate_community_stats(G, louvain_communities))
 
+    # Analyze nutritional composition of communities
+    print_task_header(7, "Analyze Community Nutritional Composition")
     community_nutrition, component_names = analyze_community_nutrition(
         graph_data, louvain_communities, "Fineli_Rel20"
     )
 
-    # Display results
-    print(f"Found {len(louvain_communities)} communities")
+    # Generate summary table
+    print("\nSummary Table of Community Nutritional Differences:")
+    summary_table = create_community_summary_table(community_nutrition, component_names)
+    print(summary_table)
 
-    key_display_nutrients = [
-        "ENERC",  # energy
-        "PROT",  # protein
-        "FAT",  # fat, total
-        "CHOAVL",  # carbohydrate, available
-        "FIBC",  # fiber, total
-    ]
+    # Visualize the differences between communities
+    print("\nGenerating visualizations to compare communities...")
+    visualize_community_differences(community_nutrition, component_names)
 
-    # Show summary
-    print("\nCommunity Nutritional Analysis:")
-    print("-" * 80)
-    for _, row in community_nutrition.iterrows():
-        print(f"Community {int(row['community_id'])} (Size: {int(row['size'])} foods)")
-        print(f"Examples: {row['food_examples']}")
-
-        # Display key nutrients with their proper names
-        for nutrient_code in key_display_nutrients:
-            if nutrient_code in row:
-                nutrient_name = component_names.get(nutrient_code, nutrient_code)
-                print(f"  {nutrient_name}: {row[nutrient_code]:.2f}")
-        print("-" * 80)
-
+    # # Return results for further analysis
+    # return {
+    #     "communities": communities,
+    #     "nutrition_analysis": community_nutrition,
+    #     "component_names": component_names,
+    #     "summary_table": summary_table,
+    # }
