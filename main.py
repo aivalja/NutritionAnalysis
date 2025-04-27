@@ -13,6 +13,27 @@ from networkx.algorithms.community.centrality import girvan_newman
 from networkx.algorithms.community import louvain_communities
 
 
+def load_component_names(data_dir="."):
+    """
+    Loads the English component names mapping from eufdname_EN.csv
+
+    Args:
+        data_dir: Directory containing the CSV files
+
+    Returns:
+        Dictionary mapping component codes to readable names
+    """
+    component_names_file = os.path.join(data_dir, "eufdname_EN.csv")
+
+    # Load the CSV with correct encoding and separator
+    comp_names_df = pd.read_csv(component_names_file, sep=";", encoding="latin1")
+
+    # Create a dictionary mapping code to readable name
+    comp_name_map = dict(zip(comp_names_df.iloc[:, 0], comp_names_df.iloc[:, 1]))
+
+    return comp_name_map
+
+
 def load_or_calculate(
     file_path: str,
     calculate_func: Callable,
@@ -153,6 +174,10 @@ def load_fineli_data(data_dir="."):
         aggfunc="first",  # Use first if there are multiple values
     ).reset_index()
 
+    # Fill NaN values with 0 in the pivot table
+    print("Filling missing nutrient values with 0...")
+    nutrient_pivot = nutrient_pivot.fillna(0)
+
     # Merge with food information
     print("Merging with food information...")
     food_nutrients = nutrient_pivot.merge(food_df, on="FOODID", how="left")
@@ -257,7 +282,83 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85):
         "graph": G,
         "food_mapping": dict(zip(food_ids, food_names)),
         "similarity_matrix": similarity_matrix,
+        "food_nutrients": food_nutrients,
     }
+
+
+def analyze_community_nutrition(graph_data, communities, data_dir="."):
+    """
+    Analyzes the nutritional composition of each community with proper nutrient names.
+
+    Args:
+        graph_data: Dictionary containing graph, food mapping, and nutritional data
+        communities: List of communities (each community is a set of node IDs)
+        data_dir: Directory containing the CSV files
+
+    Returns:
+        DataFrame containing average nutritional values for each community
+    """
+    G = graph_data["graph"]
+    food_nutrients = graph_data["food_nutrients"]
+
+    # Load component name mappings
+    component_names = load_component_names(data_dir)
+
+    # Fill any remaining NaN values with 0 to ensure calculations work correctly
+    food_nutrients = food_nutrients.fillna(0)
+
+    # Key nutritional attributes to analyze
+    key_nutrients = [
+        col
+        for col in food_nutrients.columns
+        if col
+        not in [
+            "FOODID",
+            "FOODNAME",
+            "FOODTYPE",
+            "PROCESS",
+            "EDPORT",
+            "IGCLASS",
+            "IGCLASSP",
+            "FUCLASS",
+            "FUCLASSP",
+        ]
+        and pd.api.types.is_numeric_dtype(food_nutrients[col])
+    ]
+
+    # Create a DataFrame to store community nutrition information
+    community_nutrition = []
+
+    # Analyze each community
+    for i, community in enumerate(communities):
+        # Get nutritional data for foods in this community
+        community_foods = food_nutrients[food_nutrients["FOODID"].isin(community)]
+
+        # Skip if no foods match
+        if community_foods.empty:
+            continue
+
+        # Calculate average nutritional values
+        avg_nutrients = community_foods[key_nutrients].mean().to_dict()
+
+        # Add community info
+        avg_nutrients["community_id"] = i
+        avg_nutrients["size"] = len(community)
+        avg_nutrients["food_examples"] = ", ".join(
+            community_foods["FOODNAME"].head(3).tolist()
+        )
+
+        # Add to results
+        community_nutrition.append(avg_nutrients)
+
+    # Convert to DataFrame
+    result_df = pd.DataFrame(community_nutrition)
+
+    # Final check for any NaNs that might have slipped through
+    result_df = result_df.fillna(0)
+
+    return result_df, component_names
+
 
 
 def visualize_network(graph_data, max_nodes=100):
@@ -707,3 +808,33 @@ if __name__ == "__main__":
     )
     print("Louvain Communities Statistics:")
     print(calculate_community_stats(G, louvain_communities))
+
+    community_nutrition, component_names = analyze_community_nutrition(
+        graph_data, louvain_communities, "Fineli_Rel20"
+    )
+
+    # Display results
+    print(f"Found {len(louvain_communities)} communities")
+
+    key_display_nutrients = [
+        "ENERC",  # energy
+        "PROT",  # protein
+        "FAT",  # fat, total
+        "CHOAVL",  # carbohydrate, available
+        "FIBC",  # fiber, total
+    ]
+
+    # Show summary
+    print("\nCommunity Nutritional Analysis:")
+    print("-" * 80)
+    for _, row in community_nutrition.iterrows():
+        print(f"Community {int(row['community_id'])} (Size: {int(row['size'])} foods)")
+        print(f"Examples: {row['food_examples']}")
+
+        # Display key nutrients with their proper names
+        for nutrient_code in key_display_nutrients:
+            if nutrient_code in row:
+                nutrient_name = component_names.get(nutrient_code, nutrient_code)
+                print(f"  {nutrient_name}: {row[nutrient_code]:.2f}")
+        print("-" * 80)
+
