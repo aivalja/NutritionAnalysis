@@ -1162,24 +1162,36 @@ def initialize_data(
 def analyze_centrality(G, files, show_plot=False):
     """Analyze and visualize centrality measures."""
     print_task_header(3, "Visualize and plot the degree distribution")
+    approximate = True
 
     centrality_measures = load_or_calculate(
         files["centrality"],
         calculate_centralities,
         calculate_args=[G],
-        calculate_kwargs={"use_approximation": False},
+        calculate_kwargs={"use_approximation": approximate},
         description="centrality measures",
     )
 
-    plot_centrality_histograms(
-        {
-            "degree": centrality_measures["degree"],
-            "closeness": centrality_measures["closeness"],
-            "betweenness": centrality_measures["betweenness"],
-        },
-        "Full Network",
-        save_dir="plots/centrality",
-    )
+    if approximate:
+        plot_centrality_histograms(
+            {
+                "degree": centrality_measures["degree"],
+                "closeness": centrality_measures["closeness"],
+                "betweenness": centrality_measures["betweenness"],
+            },
+            "Approximation",
+            save_dir="plots/centrality",
+        )
+    else:
+        plot_centrality_histograms(
+            {
+                "degree": centrality_measures["degree"],
+                "closeness": centrality_measures["closeness"],
+                "betweenness": centrality_measures["betweenness"],
+            },
+            "full",
+            save_dir="plots/centrality",
+        )
 
     print_task_header(4, "Provide the script for drawing power law distributions")
     results = analyze_centrality_power_law(
