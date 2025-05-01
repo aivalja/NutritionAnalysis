@@ -1,7 +1,8 @@
 import random
 import os
 import pickle
-from typing import Dict, Any, Callable, List, Optional, Tuple
+from typing import Dict, Any, Callable, List, Optional
+from collections import Counter
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
@@ -12,6 +13,8 @@ import powerlaw
 from networkx.algorithms.community.centrality import girvan_newman
 from networkx.algorithms.community import louvain_communities
 import seaborn as sns
+from tqdm import tqdm
+
 
 SHOW_PLOT = False
 default_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC", "VITC"]
@@ -248,18 +251,99 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
             "IGCLASSP",
             "FUCLASS",
             "FUCLASSP",
+            "FAFRE",  # Total fatty acids, reduntant with other fatty acids
         ]
     ]
 
-    # Fill missing values with 0 (for this initial analysis)
-    nutrients_data = food_nutrients[nutrient_cols].fillna(0)
+    # Define nutrient groups and their weights
+    nutrient_groups = {
+        "macronutrients": {
+            "columns": [col for col in nutrient_cols if col in macronutrients],
+            "weight": 0.50,  # 50% weight
+        },
+        "lipid_profile": {
+            "columns": [col for col in nutrient_cols if col in lipid_profile],
+            "weight": 0.15,  # 15% weight
+        },
+        "sugar_profile": {
+            "columns": [col for col in nutrient_cols if col in sugar_profile],
+            "weight": 0.10,  # 10% weight
+        },
+        "major_minerals": {
+            "columns": [col for col in nutrient_cols if col in major_minerals],
+            "weight": 0.10,  # 10% weight
+        },
+        "minor_minerals": {
+            "columns": [col for col in nutrient_cols if col in minor_minerals],
+            "weight": 0.05,  # 5% weight
+        },
+        "vitamins": {
+            "columns": [col for col in nutrient_cols if col in vitamins],
+            "weight": 0.08,  # 8% weight
+        },
+        "amino_acids": {
+            "columns": [col for col in nutrient_cols if col in amino_acids],
+            "weight": 0.02,  # 2% weight
+        },
+    }
 
-    # Normalize nutritional values using Min-Max scaling
+    # Initialize scaled and weighted nutrients dataframe
+    scaled_nutrients = pd.DataFrame(index=food_nutrients.index)
+
+    # Apply scaling to the entire matrix column-wise at the beginning
     scaler = MinMaxScaler()
-    normalized_nutrients = scaler.fit_transform(nutrients_data)
 
-    # Calculate cosine similarity matrix
-    similarity_matrix = cosine_similarity(normalized_nutrients)
+    # Fill missing values with 0 and scale all columns at once
+    nutrients_data = food_nutrients[nutrient_cols].fillna(0)
+    scaled_matrix = scaler.fit_transform(nutrients_data)
+
+    # Convert the scaled matrix back to a DataFrame with the same columns and index
+    scaled_nutrients_base = pd.DataFrame(
+        scaled_matrix, columns=nutrient_cols, index=food_nutrients.index
+    )
+
+    # Create a dictionary to track which nutrients are processed
+    processed_nutrients = {}
+
+    # Process each group and its nutrients
+    for group_name, group_info in nutrient_groups.items():
+        columns = group_info["columns"]
+        group_weight = group_info["weight"]
+
+        if not columns:
+            print(f"Warning: No columns found for group {group_name}")
+            continue
+
+        # Calculate individual nutrient weight
+        individual_weight = group_weight / len(columns)
+
+        for col in columns:
+            # Ensure no duplicate processing of nutrients
+            if col in processed_nutrients:
+                print(
+                    f"Warning: Nutrient {col} already processed in group {processed_nutrients[col]}"
+                )
+                continue
+
+            processed_nutrients[col] = group_name
+
+            # Use the pre-scaled values and apply weight
+            scaled_nutrients[col] = scaled_nutrients_base[col] * individual_weight
+
+    # Check for unprocessed nutrients and apply a small default weight
+    default_weight = 0.001
+    unprocessed = [col for col in nutrient_cols if col not in processed_nutrients]
+    if unprocessed:
+        print(
+            f"Warning: {len(unprocessed)} nutrients ({unprocessed}) were not assigned to any group. Applying default weight."
+        )
+        for col in unprocessed:
+            # Use the pre-scaled values and apply default weight
+            scaled_nutrients[col] = scaled_nutrients_base[col] * default_weight
+
+    # Calculate cosine similarity on all weighted nutrients at once
+    similarity_matrix = cosine_similarity(scaled_nutrients)
+
 
     print_task_header(2, "Generate a nutritional network graph")
 
@@ -1298,71 +1382,152 @@ def run_nutritional_network_analysis(
     }
 
 
+# Key nutritional attributes to analyze
+key_nutrients = [
+    "ALC",
+    "CA",
+    "CAROTENS",
+    "CHOAVL",
+    "CHOLE",
+    "ENERC",
+    "F18D2CN6",
+    "F18D3N3",
+    "F20D5N3",
+    "F22D6N3",
+    "FAFRE",
+    "FAMCIS",
+    "FAPU",
+    "FAPUN3",
+    "FAPUN6",
+    "FASAT",
+    "FAT",
+    "FATRN",
+    "FE",
+    "FIBC",
+    "FIBINS",
+    "FOL",
+    "FRUS",
+    "GALS",
+    "GLUS",
+    "ID",
+    "K",
+    "LACS",
+    "MALS",
+    "MG",
+    "NACL",
+    "NIA",
+    "NIAEQ",
+    "OA",
+    "P",
+    "PROT",
+    "PSACNCS",
+    "RIBF",
+    "SE",
+    "STARCH",
+    "STERT",
+    "SUCS",
+    "SUGAR",
+    "SUGOH",
+    "THIA",
+    "TRP",
+    "VITA",
+    "VITB12",
+    "VITC",
+    "VITD",
+    "VITE",
+    "VITK",
+    "VITPYRID",
+    "ZN",
+]
+
+# Macronutrients
+macronutrients = [
+    "ENERC",  # energy, calculated (kJ)
+    "FAT",  # fat, total (g)
+    "CHOAVL",  # carbohydrate, available (g)
+    "PROT",  # protein, total (g)
+    "ALC",  # alcohol (g)
+    "FIBC",  # fibre, total (g)
+    "FIBINS",  # fibre, insoluble (g)
+    "PSACNCS",  # polysaccharide, water-soluble non-cellulose (g)
+    "STARCH",  # starch, total (g)
+    "SUGAR",  # sugars, total (g)
+]
+
+# Lipid Profile
+lipid_profile = [
+    "FASAT",  # fatty acids, total saturated (g)
+    "FAMCIS",  # fatty acids, total monounsaturated cis (g)
+    "FAPU",  # fatty acids, total polyunsaturated (g)
+    "FATRN",  # fatty acids, total trans (g)
+    "FAPUN3",  # fatty acids, total n-3 polyunsaturated (g)
+    "FAPUN6",  # fatty acids, total n-6 polyunsaturated (g)
+    "F18D2CN6",  # fatty acid 18:2 cis, cis n-6 (linoleic acid)
+    "F18D3N3",  # fatty acid 18:3 n-3 (alpha-linolenic acid)
+    "F20D5N3",  # fatty acid 20:5 n-3 (EPA)
+    "F22D6N3",  # fatty acid 22:6 n-3 (DHA)
+    "CHOLE",  # cholesterol (mg)
+    "STERT",  # sterols, total (mg)
+]
+
+# Sugar Profile
+sugar_profile = [
+    "FRUS",  # fructose (g)
+    "GALS",  # galactose (g)
+    "GLUS",  # glucose (g)
+    "LACS",  # lactose (g)
+    "MALS",  # maltose (g)
+    "SUCS",  # sucrose (g)
+    "SUGOH",  # sugar alcohols (g)
+    "OA",  # organic acids, total (g)
+]
+
+# Major Minerals
+major_minerals = [
+    "CA",  # calcium (mg)
+    "K",  # potassium (mg)
+    "MG",  # magnesium (mg)
+    "NACL",  # sodium/salt (mg)
+    "P",  # phosphorus (mg)
+]
+
+# Minor Minerals
+minor_minerals = [
+    "FE",  # iron (mg)
+    "ID",  # iodine (ug)
+    "SE",  # selenium (ug)
+    "ZN",  # zinc (mg)
+]
+
+# Vitamins
+vitamins = [
+    "VITA",  # Vitamin A (RAE)
+    "THIA",  # Thiamine (B1)
+    "RIBF",  # Riboflavin (B2)
+    "NIA",  # Niacin
+    "NIAEQ",  # Niacin equivalent (NE)
+    "VITPYRID",  # Pyridoxine (B6)
+    "FOL",  # Folate
+    "VITB12",  # Vitamin B12
+    "VITC",  # Vitamin C
+    "VITD",  # Vitamin D
+    "VITE",  # Vitamin E (alpha-tocopherol)
+    "VITK",  # Vitamin K
+    "CAROTENS",  # Carotenoids
+]
+
+# Amino acids
+amino_acids = [
+    "TRP",  # Tryptophan
+]
+
 if __name__ == "__main__":
     # Define constants
     SHOW_PLOT = False
     DATA_DIR = "tmp"
     DATA_DIR_WEIGHTED = "tmp_weighted"
     DATASET = "Fineli_Rel20"
-    SIMILARITY_THRESHOLD = 0.80
-
-    # Key nutritional attributes to analyze
-    key_nutrients = [
-        "ALC",
-        "CA",
-        "CAROTENS",
-        "CHOAVL",
-        "CHOLE",
-        "ENERC",
-        "F18D2CN6",
-        "F18D3N3",
-        "F20D5N3",
-        "F22D6N3",
-        "FAFRE",
-        "FAMCIS",
-        "FAPU",
-        "FAPUN3",
-        "FAPUN6",
-        "FASAT",
-        "FAT",
-        "FATRN",
-        "FE",
-        "FIBC",
-        "FIBINS",
-        "FOL",
-        "FRUS",
-        "GALS",
-        "GLUS",
-        "ID",
-        "K",
-        "LACS",
-        "MALS",
-        "MG",
-        "NACL",
-        "NIA",
-        "NIAEQ",
-        "OA",
-        "P",
-        "PROT",
-        "PSACNCS",
-        "RIBF",
-        "SE",
-        "STARCH",
-        "STERT",
-        "SUCS",
-        "SUGAR",
-        "SUGOH",
-        "THIA",
-        "TRP",
-        "VITA",
-        "VITB12",
-        "VITC",
-        "VITD",
-        "VITE",
-        "VITK",
-        "VITPYRID",
-        "ZN",
-    ]
+    SIMILARITY_THRESHOLD = 0.8
 
     # Run analysis with default parameters
     network_analysis = run_nutritional_network_analysis(
