@@ -1196,7 +1196,7 @@ def analyze_centrality(G, files, show_plot=False):
     return centrality_measures, results
 
 
-def analyze_clustering(G, files, show_plot=False):
+def analyze_clustering(G, files, show_plot=False, output_dir="."):
     """Analyze clustering coefficients in the network."""
     print_task_header(
         5,
@@ -1218,6 +1218,9 @@ def analyze_clustering(G, files, show_plot=False):
     plt.xlabel("Clustering Coefficient")
     plt.ylabel("Number of Nodes (Count)")
     plt.grid(axis="y", linestyle="--")
+
+    filename = f"{output_dir}/clustering_histogram.png"
+    plt.savefig(filename)
 
     if show_plot:
         plt.show()
