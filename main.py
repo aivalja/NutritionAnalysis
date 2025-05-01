@@ -1356,6 +1356,525 @@ def display_results(
         print("-" * 80)
 
 
+def analyze_nutritional_assortativity(
+    graph_data,
+    communities=None,
+    nutrient_groups=None,
+    top_nutrients=10,
+    num_bins=5,
+    visualize=True,
+):
+    """
+    Analyzes the assortativity of a nutritional network including community structure.
+
+    Args:
+        graph_data: Dictionary containing graph and related data from create_nutritional_network()
+        communities: Dictionary mapping node IDs to community IDs, or a list of node sets
+        nutrient_groups: Dictionary mapping group names to lists of nutrient columns
+        top_nutrients: Number of top nutrients to analyze by variance if not using groups
+        num_bins: Number of bins to discretize continuous nutrient values
+        visualize: Whether to create and show visualizations
+
+    Returns:
+        Dictionary with assortativity results
+    """
+
+    print("Analyzing assortativity patterns in the nutritional network...")
+
+    # Extract graph and data
+    G = graph_data["graph"]
+    food_nutrients = graph_data["food_nutrients"]
+
+    # Define nutrient groups if not provided
+    if nutrient_groups is None:
+        try:
+            # Try to use predefined groups from the global namespace
+            predefined_groups = {
+                "macronutrients": macronutrients,
+                "lipid_profile": lipid_profile,
+                "sugar_profile": sugar_profile,
+                "major_minerals": major_minerals,
+                "minor_minerals": minor_minerals,
+                "vitamins": vitamins,
+                "amino_acids": amino_acids,
+            }
+
+            # Check which groups have at least one column in the data
+            nutrient_groups = {}
+            for group_name, group_list in predefined_groups.items():
+                available_nutrients = [
+                    col for col in group_list if col in food_nutrients.columns
+                ]
+                if available_nutrients:
+                    nutrient_groups[group_name] = available_nutrients
+
+        except NameError:
+            # If predefined groups don't exist, we'll select by variance
+            nutrient_groups = {}
+
+    # If no nutrient groups are available or defined, select top nutrients by variance
+    if not nutrient_groups:
+        print("ERROR: no nutrient groups")
+        return
+
+    results = {}
+
+    # 1. Calculate degree assortativity
+    print("Calculating degree assortativity...")
+    degree_assortativity = nx.degree_assortativity_coefficient(G)
+    results["degree_assortativity"] = degree_assortativity
+
+    # 2. Process community data if provided
+    if communities:
+        print("Processing community structure...")
+
+        # Convert communities to node-to-community dictionary if necessary
+        if isinstance(communities, list):
+            # Convert list of sets/lists to dictionary
+            community_dict = {}
+            for i, community in enumerate(communities):
+                for node in community:
+                    community_dict[node] = i
+        elif isinstance(communities, dict):
+            community_dict = communities
+        else:
+            raise ValueError(
+                "Communities must be provided as a dictionary or list of node sets"
+            )
+
+        # Set community as node attribute
+        nx.set_node_attributes(G, community_dict, name="community")
+
+        # Calculate community assortativity
+        community_assortativity = nx.attribute_assortativity_coefficient(G, "community")
+        results["community_assortativity"] = community_assortativity
+        print(f"Community assortativity coefficient: {community_assortativity:.4f}")
+
+        # Generate community-based analysis
+        community_nutrients = defaultdict(list)
+
+        # Group nodes by community
+        community_nodes = defaultdict(list)
+        for node, comm_id in community_dict.items():
+            community_nodes[comm_id].append(node)
+
+        # Calculate average nutrient values per community
+        community_avg_nutrients = {}
+
+        for comm_id, nodes in community_nodes.items():
+            # Get food IDs in this community
+            food_ids = [
+                node for node in nodes if node in food_nutrients["FOODID"].values
+            ]
+
+            if food_ids:
+                # Filter nutrients data for this community
+                community_foods = food_nutrients[
+                    food_nutrients["FOODID"].isin(food_ids)
+                ]
+
+                # Calculate average for each nutrient group
+                group_averages = {}
+
+                for group_name, nutrient_list in nutrient_groups.items():
+                    available_nutrients = [
+                        n for n in nutrient_list if n in food_nutrients.columns
+                    ]
+
+                    if available_nutrients:
+                        # Calculate mean for each nutrient, ignoring NaN values
+                        nutrient_means = community_foods[available_nutrients].mean(
+                            skipna=True
+                        )
+                        group_averages[group_name] = nutrient_means.to_dict()
+
+                community_avg_nutrients[comm_id] = group_averages
+
+        results["community_nutrients"] = community_avg_nutrients
+
+    # 3. Calculate attribute assortativity for selected nutrients
+    print("Calculating nutrient attribute assortativity...")
+    attribute_results = {}
+
+    for group_name, nutrient_list in nutrient_groups.items():
+        print(f"Processing {group_name} group...")
+        group_results = {}
+
+        for attr in nutrient_list:
+            if attr in food_nutrients.columns:
+                # Create a mapping of node IDs to nutrient values
+                attr_dict = {}
+
+                for node in G.nodes():
+                    food_row = food_nutrients[food_nutrients["FOODID"] == node]
+                    if not food_row.empty and not pd.isna(food_row[attr].values[0]):
+                        attr_dict[node] = float(food_row[attr].values[0])
+
+                if len(attr_dict) > 1:  # Need at least 2 values to create bins
+                    # Discretize continuous values into bins
+                    values = list(attr_dict.values())
+                    if min(values) == max(values):
+                        print(f"  Skipping {attr}: All values are identical")
+                        continue
+
+                    bins = np.linspace(min(values), max(values), num_bins + 1)
+
+                    # Create binned attribute dictionary
+                    binned_attr_dict = {}
+                    for node, value in attr_dict.items():
+                        bin_index = np.digitize(value, bins)
+                        binned_attr_dict[node] = int(bin_index)
+
+                    # Set the node attribute in the graph
+                    nx.set_node_attributes(G, binned_attr_dict, name=f"{attr}_bin")
+
+                    # Calculate assortativity for this attribute
+                    try:
+                        attr_assortativity = nx.attribute_assortativity_coefficient(
+                            G, f"{attr}_bin"
+                        )
+                        group_results[attr] = attr_assortativity
+                        print(f"  {attr}: {attr_assortativity:.4f}")
+                    except Exception as e:
+                        print(
+                            f"  Could not calculate assortativity for {attr}: {str(e)}"
+                        )
+
+        if group_results:
+            attribute_results[group_name] = group_results
+
+    results["attribute_assortativity"] = attribute_results
+
+    # 4. Create visualizations
+    if visualize:
+        print("\nCreating visualizations...")
+
+        # Create figure for assortativity coefficients
+        plt.figure(figsize=(10, 6))
+
+        # Setup bars for degree and community (if available) assortativity
+        labels = ["Degree Assortativity"]
+        values = [degree_assortativity]
+
+        if communities:
+            labels.append("Community Assortativity")
+            values.append(community_assortativity)
+
+        plt.bar(labels, values, color=["skyblue", "lightgreen"][: len(labels)])
+        plt.axhline(y=0, color="r", linestyle="-", alpha=0.3)
+        plt.ylim(-1.1, 1.1)
+        plt.ylabel("Assortativity Coefficient")
+        plt.title("Assortativity in Nutritional Network")
+
+        # Add interpretation text
+        for i, (label, value) in enumerate(zip(labels, values)):
+            if value > 0:
+                plt.text(
+                    i,
+                    value / 2,
+                    "Assortative\n(similar connect\nto similar)",
+                    ha="center",
+                    va="center",
+                    bbox=dict(facecolor="white", alpha=0.8),
+                )
+            else:
+                plt.text(
+                    i,
+                    value / 2,
+                    "Disassortative\n(dissimilar connect\nto dissimilar)",
+                    ha="center",
+                    va="center",
+                    bbox=dict(facecolor="white", alpha=0.8),
+                )
+
+        plt.tight_layout()
+        plt.show()
+
+        # Create heatmap of assortativity coefficients by nutrient group
+        if attribute_results:
+            # Prepare data for heatmap
+            heatmap_data = []
+
+            for group_name, group_results in attribute_results.items():
+                for nutrient, coeff in group_results.items():
+                    heatmap_data.append(
+                        {
+                            "Nutrient Group": group_name,
+                            "Nutrient": nutrient,
+                            "Assortativity": coeff,
+                        }
+                    )
+
+            if heatmap_data:
+                df_heatmap = pd.DataFrame(heatmap_data)
+
+                # Create pivot table for the heatmap
+                pivot_data = df_heatmap.pivot_table(
+                    index="Nutrient Group",
+                    columns="Nutrient",
+                    values="Assortativity",
+                    aggfunc="first",
+                )
+
+                # Create heatmap
+                plt.figure(figsize=(14, 8))
+                sns.heatmap(
+                    pivot_data,
+                    cmap="coolwarm",
+                    center=0,
+                    annot=True,
+                    fmt=".2f",
+                    linewidths=0.5,
+                    cbar_kws={"label": "Assortativity Coefficient"},
+                )
+                plt.title("Assortativity by Nutrient")
+                plt.tight_layout()
+                plt.show()
+
+                # Bar plot showing average assortativity by nutrient group
+                group_avg = (
+                    df_heatmap.groupby("Nutrient Group")["Assortativity"]
+                    .mean()
+                    .sort_values()
+                )
+
+                plt.figure(figsize=(10, 6))
+                colors = ["lightgreen" if x >= 0 else "lightcoral" for x in group_avg]
+                bars = plt.bar(group_avg.index, group_avg, color=colors)
+                plt.axhline(y=0, color="r", linestyle="-", alpha=0.3)
+                plt.ylabel("Average Assortativity Coefficient")
+                plt.title("Average Nutrient Group Assortativity")
+                plt.xticks(rotation=45, ha="right")
+
+                # Add value labels on bars
+                for bar in bars:
+                    height = bar.get_height()
+                    plt.text(
+                        bar.get_x() + bar.get_width() / 2.0,
+                        0.01 if height < 0 else height + 0.01,
+                        f"{height:.2f}",
+                        ha="center",
+                        va="bottom" if height >= 0 else "top",
+                    )
+
+                plt.tight_layout()
+                plt.show()
+
+        # Community-specific visualizations
+        if communities and len(community_avg_nutrients) > 0:
+            print("Creating community-based visualizations...")
+
+            # Prepare data for PCA visualization of communities
+            from sklearn.decomposition import PCA
+            from sklearn.preprocessing import StandardScaler
+
+            # Collect nutrient data for all communities
+            community_nutrient_data = []
+
+            # Select common nutrients available across communities for comparison
+            common_nutrients = set()
+
+            # First, identify common nutrients across all communities
+            for comm_id, group_data in community_avg_nutrients.items():
+                for group_name, nutrients in group_data.items():
+                    if common_nutrients:
+                        common_nutrients = common_nutrients.intersection(
+                            set(nutrients.keys())
+                        )
+                    else:
+                        common_nutrients = set(nutrients.keys())
+
+            # If we have common nutrients, prepare data for PCA
+            if common_nutrients:
+                common_nutrients = list(common_nutrients)
+
+                for comm_id, group_data in community_avg_nutrients.items():
+                    # Gather all nutrient values for this community
+                    nutrient_values = {}
+
+                    for group_name, nutrients in group_data.items():
+                        for nutrient in common_nutrients:
+                            if nutrient in nutrients:
+                                nutrient_values[nutrient] = nutrients[nutrient]
+
+                    if len(nutrient_values) == len(common_nutrients):
+                        row = {"community": comm_id}
+                        row.update(nutrient_values)
+                        community_nutrient_data.append(row)
+
+                if (
+                    len(community_nutrient_data) >= 3
+                ):  # Need at least 3 communities for meaningful PCA
+                    df_community = pd.DataFrame(community_nutrient_data)
+
+                    # Extract features for PCA
+                    X = df_community[common_nutrients].values
+
+                    # Standardize the data
+                    X_std = StandardScaler().fit_transform(X)
+
+                    # Apply PCA with 2 components
+                    pca = PCA(n_components=2)
+                    X_pca = pca.fit_transform(X_std)
+
+                    # Create PCA plot
+                    plt.figure(figsize=(10, 8))
+                    plt.scatter(
+                        X_pca[:, 0],
+                        X_pca[:, 1],
+                        c=df_community["community"],
+                        cmap="viridis",
+                        s=100,
+                        alpha=0.8,
+                    )
+
+                    # Add community labels
+                    for i, comm_id in enumerate(df_community["community"]):
+                        plt.annotate(
+                            f"Community {comm_id}",
+                            (X_pca[i, 0], X_pca[i, 1]),
+                            xytext=(5, 5),
+                            textcoords="offset points",
+                        )
+
+                    # Add feature vectors
+                    feature_vectors = pca.components_.T * np.sqrt(
+                        pca.explained_variance_
+                    )
+
+                    # Only show the most important feature vectors
+                    importance = np.sum(np.abs(feature_vectors), axis=1)
+                    top_idx = np.argsort(importance)[-min(10, len(common_nutrients)) :]
+
+                    for i in top_idx:
+                        plt.arrow(
+                            0,
+                            0,
+                            feature_vectors[i, 0],
+                            feature_vectors[i, 1],
+                            color="r",
+                            alpha=0.5,
+                            head_width=0.05,
+                        )
+                        plt.text(
+                            feature_vectors[i, 0] * 1.1,
+                            feature_vectors[i, 1] * 1.1,
+                            common_nutrients[i],
+                            color="r",
+                            ha="center",
+                            va="center",
+                        )
+
+                    plt.title("PCA of Community Nutrient Profiles")
+                    plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]:.2%} variance)")
+                    plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]:.2%} variance)")
+                    plt.axhline(y=0, color="k", linestyle="--", alpha=0.3)
+                    plt.axvline(x=0, color="k", linestyle="--", alpha=0.3)
+                    plt.grid(alpha=0.3)
+                    plt.tight_layout()
+                    plt.show()
+
+                    # Create heatmap comparing nutrient profiles across communities
+                    community_nutrient_matrix = df_community.set_index("community")[
+                        common_nutrients
+                    ]
+
+                    # Standardize the data for heatmap
+                    community_nutrient_std = pd.DataFrame(
+                        StandardScaler().fit_transform(community_nutrient_matrix),
+                        index=community_nutrient_matrix.index,
+                        columns=community_nutrient_matrix.columns,
+                    )
+
+                    plt.figure(figsize=(12, len(community_nutrient_std) * 0.8))
+                    sns.heatmap(
+                        community_nutrient_std,
+                        cmap="coolwarm",
+                        center=0,
+                        annot=False,
+                        xticklabels=1,
+                        yticklabels=1,
+                    )
+                    plt.title("Standardized Nutrient Profiles by Community")
+                    plt.tight_layout()
+                    plt.show()
+            else:
+                print("Warning: No common nutrients found across communities.")
+
+    # 5. Print interpretation and summary
+    print("\n===== ASSORTATIVITY ANALYSIS SUMMARY =====")
+    print(f"Degree assortativity coefficient: {degree_assortativity:.4f}")
+
+    if degree_assortativity > 0.3:
+        print("The network shows strong assortative mixing by degree.")
+        print(
+            "Foods with many connections tend to connect to other foods with many connections."
+        )
+    elif degree_assortativity > 0:
+        print("The network shows weak assortative mixing by degree.")
+    elif degree_assortativity < -0.3:
+        print("The network shows strong disassortative mixing by degree.")
+        print(
+            "Foods with many connections tend to connect to foods with few connections."
+        )
+    elif degree_assortativity < 0:
+        print("The network shows weak disassortative mixing by degree.")
+    else:
+        print("The network shows no clear assortativity pattern by degree.")
+
+    if communities:
+        print(
+            f"\nCommunity assortativity coefficient: {results['community_assortativity']:.4f}"
+        )
+
+        if results["community_assortativity"] > 0.5:
+            print("The network shows STRONG community-based assortativity.")
+            print("Nodes are strongly connected within their communities.")
+        elif results["community_assortativity"] > 0:
+            print("The network shows WEAK community-based assortativity.")
+        else:
+            print("The network shows DISASSORTATIVE community structure.")
+            print("Nodes tend to connect to nodes from different communities.")
+
+    if attribute_results:
+        print("\nNutrient attribute assortativity summary:")
+
+        # Find the most assortative and disassortative nutrients overall
+        all_nutrients = {}
+        for group_data in attribute_results.values():
+            all_nutrients.update(group_data)
+
+        if all_nutrients:
+            max_assort = max(all_nutrients.items(), key=lambda x: x[1])
+            min_assort = min(all_nutrients.items(), key=lambda x: x[1])
+
+            print(f"Most assortative nutrient: {max_assort[0]} ({max_assort[1]:.4f})")
+            print(
+                f"Most disassortative nutrient: {min_assort[0]} ({min_assort[1]:.4f})"
+            )
+
+            # Calculate overall average
+            avg_assort = np.mean(list(all_nutrients.values()))
+            print(f"Overall average assortativity: {avg_assort:.4f}")
+
+            if avg_assort > 0.2:
+                print("The nutritional network is generally ASSORTATIVE:")
+                print(
+                    "Foods with similar nutrient profiles tend to be connected to each other."
+                )
+            elif avg_assort < -0.2:
+                print("The nutritional network is generally DISASSORTATIVE:")
+                print(
+                    "Foods with different nutrient profiles tend to be connected to each other."
+                )
+            else:
+                print(
+                    "The nutritional network shows WEAK mixing patterns by nutrient content."
+                )
+
+    return results
+
+
 def run_nutritional_network_analysis(
     data_dir="tmp",
     dataset="Fineli_Rel20",
@@ -1375,7 +1894,7 @@ def run_nutritional_network_analysis(
     centrality_measures, _ = analyze_centrality(G, files, show_plot)
 
     # Analyze clustering
-    analyze_clustering(G, files, show_plot)
+    analyze_clustering(G, files, show_plot, data_dir)
 
     # Detect communities
     gn_communities, louvain_comms = detect_communities(G, files)
@@ -1395,11 +1914,20 @@ def run_nutritional_network_analysis(
         community_nutrition, component_names, community_top_foods, top_food_analysis
     )
 
+    # Analyze network assortativity
+    assortativity_results = analyze_nutritional_assortativity(
+        graph_data=graph_data,
+        communities=louvain_comms,
+        visualize=True,
+    )
+
+
     return {
         "graph": G,
         "centrality_measures": centrality_measures,
         "communities": louvain_comms,
         "community_nutrition": community_nutrition,
+        "assortativity_results": assortativity_results,
     }
 
 
