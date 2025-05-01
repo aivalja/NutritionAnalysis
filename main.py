@@ -344,7 +344,6 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
     # Calculate cosine similarity on all weighted nutrients at once
     similarity_matrix = cosine_similarity(scaled_nutrients)
 
-
     print_task_header(2, "Generate a nutritional network graph")
 
     # Create a new graph
@@ -356,18 +355,27 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
 
     if weighted:
         # Add edges based on similarity threshold
-        for i in range(len(food_ids)):
-            for j in range(i + 1, len(food_ids)):
+        for i, food_id_i in enumerate(food_ids):
+            for j, food_id_j in enumerate(food_ids[i + 1 :], start=i + 1):
                 similarity = similarity_matrix[i, j]
                 if similarity >= similarity_threshold:
-                    G.add_edge(food_ids[i], food_ids[j])
+                    G.add_edge(food_id_i, food_id_j)
     else:
         # Add edges based on similarity with weights
-        for i in range(len(food_ids)):
-            for j in range(i + 1, len(food_ids)):
+        for i, food_id_i in enumerate(food_ids):
+            for j, food_id_j in enumerate(food_ids[i + 1 :], start=i + 1):
                 similarity = similarity_matrix[i, j]
                 if similarity >= similarity_threshold:
-                    G.add_edge(food_ids[i], food_ids[j], weight=similarity)
+                    # Scale similarity from [similarity_threshold, 1] to [0.01, 1]
+                    scaled_weight = (
+                        0.01
+                        + (
+                            (similarity - similarity_threshold)
+                            / (1.0 - similarity_threshold)
+                        )
+                        * 0.99
+                    )
+                    G.add_edge(food_id_i, food_id_j, weight=scaled_weight)
 
     print(
         f"Created graph with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges"
