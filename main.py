@@ -391,24 +391,19 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
 
 
 def analyze_community_nutrition(
-    graph_data, communities, data_dir=".", key_nutrients=default_nutrients
+    graph_data, communities, key_nutrients=default_nutrients
 ):
     """
-    Analyzes the nutritional composition of each community with proper nutrient names.
+    Analyzes the nutritional composition of each community
 
     Args:
         graph_data: Dictionary containing graph, food mapping, and nutritional data
         communities: List of communities (each community is a set of node IDs)
-        data_dir: Directory containing the CSV files
 
     Returns:
-        DataFrame containing average nutritional values for each community and component names
+        DataFrame containing average nutritional values for each community
     """
-    G = graph_data["graph"]
     food_nutrients = graph_data["food_nutrients"]
-
-    # Load component name mappings
-    component_names = load_component_names(data_dir)
 
     # Fill any remaining NaN values with 0 to ensure calculations work correctly
     food_nutrients = food_nutrients.fillna(0)
@@ -1280,8 +1275,11 @@ def analyze_nutritional_composition(
     """Analyze the nutritional composition of communities."""
     print_task_header(7, "Analyze Community Nutritional Composition")
 
-    community_nutrition, component_names = analyze_community_nutrition(
-        graph_data, communities, dataset, key_nutrients
+    # Load component name mappings
+    component_names = load_component_names(dataset)
+
+    community_nutrition = analyze_community_nutrition(
+        graph_data, communities, key_nutrients
     )
 
     # Generate summary table
