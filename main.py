@@ -436,7 +436,7 @@ def analyze_community_nutrition(
     # Convert to DataFrame
     result_df = pd.DataFrame(community_nutrition)
 
-    return result_df, component_names
+    return result_df
 
 
 def create_community_summary_table(
