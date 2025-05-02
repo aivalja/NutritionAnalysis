@@ -1893,7 +1893,24 @@ def run_nutritional_network_analysis(
     files, graph_data = initialize_data(
         data_dir, dataset, similarity_threshold, weighted
     )
+
     G = graph_data["graph"]
+
+    filename = (
+        f'{data_dir}/graph_{similarity_threshold}{"_weighted" if weighted else ""}.gexf'
+    )
+    if not os.path.isfile(filename):
+        nx.write_gexf(G, filename)
+        print("Saved gexf to", filename)
+    else:
+        print("File found, not saving")
+
+    filename = f'{data_dir}/graph_{similarity_threshold}{"_weighted" if weighted else ""}.graphml'
+    if not os.path.isfile(filename):
+        nx.write_graphml(G, filename)
+        print("Saved graphml to", filename)
+    else:
+        print("File found, not saving")
 
     # Analyze centrality
     centrality_measures, _ = analyze_centrality(G, files, show_plot)
