@@ -2,7 +2,7 @@ import random
 import os
 import pickle
 from typing import Dict, Any, Callable, List, Optional
-from collections import Counter
+from collections import Counter, defaultdict
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
@@ -1054,7 +1054,9 @@ def analyze_top_food_characteristics(
     food_nutrients = graph_data["food_nutrients"]
 
     # Calculate global averages for normalization
+
     global_avg = food_nutrients[key_nutrients].mean()
+    global_std = food_nutrients[key_nutrients].std()
 
     analysis_results = {}
 
@@ -1075,24 +1077,27 @@ def analyze_top_food_characteristics(
         # Calculate average values for key nutrients
         avg_nutrients = relevant_foods[key_nutrients].mean()
 
-        # Identify dominant characteristics by relative value compared to global average
+        # Identify dominant characteristics using z-scores
         nutrient_values = []
         for code in key_nutrients:
-            if not pd.isna(avg_nutrients[code]) and global_avg[code] > 0:
-                relative_value = avg_nutrients[code] / global_avg[code]
+            if not pd.isna(avg_nutrients[code]) and global_std[code] > 0:
+                # Calculate z-score: how many standard deviations from the mean
+                z_score = (avg_nutrients[code] - global_avg[code]) / global_std[code]
                 nutrient_values.append(
                     (
                         component_names.get(code, code),
-                        relative_value,
+                        z_score,
                         avg_nutrients[code],
                     )
                 )
 
-        # Sort by relative value (how much higher/lower than global average)
-        nutrient_values.sort(key=lambda x: x[1], reverse=True)
+        # Sort by absolute z-score
+        nutrient_values.sort(key=lambda x: abs(x[1]), reverse=True)
+        # # Sort by positive z-score
+        # nutrient_values.sort(key=lambda x: x[1], reverse=True)
         dominant_traits = [
-            f"{name}: {value:.2f} ({rel:.2f}x avg)"
-            for name, rel, value in nutrient_values[:2]
+            f"{name}: {value:.2f} (z-score: {rel:.2f})"
+            for name, rel, value in nutrient_values[:3]  # Showing top 3
         ]
 
         # Look for common patterns in food names (simple keyword analysis)
