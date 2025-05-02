@@ -1361,6 +1361,81 @@ def display_results(
         print("-" * 80)
 
 
+def pagerank(G, dampening=0.85, output_dir="."):
+    # Calculate PageRank scores
+    pagerank_scores = nx.pagerank(G, alpha=dampening)
+
+    # Get top 10 using readable names
+    sorted_items = sorted(pagerank_scores.items(), key=lambda x: x[1], reverse=True)[
+        :10
+    ]
+    top_10 = [(G.nodes[node_id]["name"], score) for node_id, score in sorted_items]
+
+    # Create a DataFrame for visualization
+    df = pd.DataFrame(top_10, columns=["Food Item", "PageRank Score"])
+
+    # Create bar chart visualization
+    plt.figure(figsize=(10, 6))
+    plt.barh(df["Food Item"], df["PageRank Score"], color="skyblue")
+    plt.xlabel("PageRank Score")
+    plt.ylabel("Food Item")
+    plt.title("Top 10 Influential Food Items by PageRank Score")
+    plt.tight_layout()
+    filename = f"{output_dir}/pagerank_score.png"
+    plt.savefig(filename)
+    plt.show()
+    if SHOW_PLOT:
+        plt.close()
+
+    # Create network visualization of top 10 items
+    top_10_nodes = [item[0] for item in sorted_items[:10]]  # Get IDs of top 10 nodes
+    subgraph = G.subgraph(top_10_nodes)
+
+    # Create figure with explicit axes
+    fig, ax = plt.subplots(figsize=(12, 8))
+    pos = nx.spring_layout(subgraph, seed=42)  # For layout reproducibility
+
+    # Node sizes proportional to PageRank scores
+    node_sizes = [pagerank_scores[node] * 20000 for node in subgraph.nodes()]
+
+    # Create a mapping of node IDs to food names for labels
+    node_labels = {node: G.nodes[node]["name"] for node in subgraph.nodes()}
+
+    # Create color map
+    node_colors = [pagerank_scores[node] for node in subgraph.nodes()]
+    cmap = plt.cm.Reds
+
+    # Draw the network
+    nx.draw_networkx(
+        subgraph,
+        pos=pos,
+        node_size=node_sizes,
+        node_color=node_colors,
+        cmap=cmap,
+        font_size=10,
+        width=1.5,
+        edge_color="gray",
+        labels=node_labels,
+        ax=ax,  # Use the specific axis
+    )
+
+    # Add colorbar with explicit axes reference
+    sm = plt.cm.ScalarMappable(
+        cmap=cmap, norm=plt.Normalize(vmin=min(node_colors), vmax=max(node_colors))
+    )
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=ax, label="PageRank Score")
+
+    plt.title("Network of Top 10 Influential Food Items")
+    ax.set_axis_off()  # Turn off axis
+    plt.tight_layout()
+    filename = f"{output_dir}/pagerank_network.png"
+    plt.savefig(filename)
+    plt.show()
+    if SHOW_PLOT:
+        plt.close()
+
+
 def analyze_nutritional_assortativity(
     graph_data,
     communities=None,
@@ -1935,6 +2010,8 @@ def run_nutritional_network_analysis(
     display_results(
         community_nutrition, component_names, community_top_foods, top_food_analysis
     )
+
+    pagerank(G, output_dir=data_dir)
 
     # Analyze network assortativity
     assortativity_results = analyze_nutritional_assortativity(
