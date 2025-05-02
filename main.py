@@ -1955,6 +1955,109 @@ def analyze_nutritional_assortativity(
     return results
 
 
+def k_core_analyzis(G):
+    # Compute the core number for each node
+    core_numbers = nx.core_number(G)
+
+    # Get the distribution of core numbers
+    core_distribution = Counter(core_numbers.values())
+    max_core = max(core_numbers.values())
+
+    print(f"Maximum core number: {max_core}")
+    print(f"Distribution of core numbers: {dict(core_distribution)}")
+
+    # Plot the distribution
+    plt.figure(figsize=(10, 6))
+    plt.bar(core_distribution.keys(), core_distribution.values())
+    plt.xlabel("Core Number")
+    plt.ylabel("Number of Nodes")
+    plt.title("Distribution of Core Numbers")
+    plt.savefig("core_distribution.png")
+
+    # Select representative k values (e.g., min, 25%, 50%, 75%, max)
+    k_values = [
+        1,
+        max(2, max_core // 4),
+        max(3, max_core // 2),
+        max(4, 3 * max_core // 4),
+        max_core,
+    ]
+
+    for k in k_values:
+        # Extract the k-core subgraph
+        k_core = nx.k_core(G, k=k)
+
+        print(
+            f"k={k} core has {len(k_core.nodes())} nodes and {len(k_core.edges())} edges"
+        )
+
+        # Only visualize if the subgraph is small enough
+        if len(k_core.nodes()) < 5000:
+            plt.figure(figsize=(8, 8))
+            pos = nx.spring_layout(k_core, seed=42)
+            nx.draw(k_core, pos, node_size=50, with_labels=False)
+            plt.title(f"k-core (k={k})")
+            plt.savefig(f"k_core_{k}.png")
+
+    # Group nodes by their core number
+    nodes_by_core = {}
+    for node, core in core_numbers.items():
+        if core not in nodes_by_core:
+            nodes_by_core[core] = []
+        nodes_by_core[core].append(node)
+
+    # Analyze properties for each core
+    core_properties = {}
+    for k in sorted(nodes_by_core.keys()):
+        nodes = nodes_by_core[k]
+        if not nodes:
+            continue
+
+        # Calculate average degree
+        avg_degree = sum(dict(G.degree(nodes)).values()) / len(nodes)
+
+        # Calculate average clustering coefficient (for smaller cores)
+        if len(nodes) < 1000:
+            subgraph = G.subgraph(nodes)
+            avg_clustering = nx.average_clustering(subgraph)
+        else:
+            # For large cores, sample nodes to calculate clustering
+            sample_size = min(1000, len(nodes))
+            sampled_nodes = np.random.choice(nodes, sample_size, replace=False)
+            avg_clustering = nx.average_clustering(G.subgraph(sampled_nodes))
+
+        core_properties[k] = {
+            "node_count": len(nodes),
+            "avg_degree": avg_degree,
+            "avg_clustering": avg_clustering,
+        }
+
+    # Plot core properties
+    plt.figure(figsize=(15, 5))
+    ks = sorted(core_properties.keys())
+
+    plt.subplot(1, 3, 1)
+    plt.plot(ks, [core_properties[k]["node_count"] for k in ks])
+    plt.xlabel("Core Number")
+    plt.ylabel("Number of Nodes")
+    plt.title("Node Count vs Core Number")
+
+    plt.subplot(1, 3, 2)
+    plt.plot(ks, [core_properties[k]["avg_degree"] for k in ks])
+    plt.xlabel("Core Number")
+    plt.ylabel("Average Degree")
+    plt.title("Average Degree vs Core Number")
+
+    plt.subplot(1, 3, 3)
+    plt.plot(ks, [core_properties[k]["avg_clustering"] for k in ks])
+    plt.xlabel("Core Number")
+    plt.ylabel("Average Clustering")
+    plt.title("Average Clustering vs Core Number")
+
+    plt.tight_layout()
+    plt.savefig("core_properties.png")
+
+
 def run_nutritional_network_analysis(
     data_dir="tmp",
     dataset="Fineli_Rel20",
