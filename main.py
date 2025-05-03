@@ -461,6 +461,7 @@ def visualize_community_differences(
     community_nutrition,
     component_names,
     key_nutrients=default_nutrients,
+    output_dir=".",
 ):
     """
     Creates visualizations comparing nutritional differences between communities.
@@ -523,6 +524,8 @@ def visualize_community_differences(
     plt.xticks(positions, nutrient_names, rotation=45, ha="right")
     plt.legend()
     plt.tight_layout()
+    filename = f"{output_dir}/nurtient_bar_graph.png"
+    plt.savefig(filename, bbox_inches="tight")
     if SHOW_PLOT:
         plt.show()
     else:
@@ -556,6 +559,9 @@ def visualize_community_differences(
     )
     plt.title("Relative Nutrient Composition by Community (Normalized to Max Value)")
     plt.tight_layout()
+    filename = f"{output_dir}/relative_nutrient_heatmap.png"
+    plt.savefig(filename, bbox_inches="tight")
+
     if SHOW_PLOT:
         plt.show()
     else:
@@ -611,13 +617,16 @@ def visualize_community_differences(
         # Add legend
         plt.legend(loc="upper right", bbox_to_anchor=(0.1, 0.1))
         plt.title("Nutritional Profile of Food Communities (Normalized)")
+
+        filename = f"{output_dir}/nutritional_profile_of_communities.png"
+        plt.savefig(filename, bbox_inches="tight")
         if SHOW_PLOT:
             plt.show()
         else:
             plt.close()
 
 
-def visualize_network(graph_data, max_nodes=100):
+def visualize_network(graph_data, max_nodes=100, output_dir="."):
     """
     Visualizes the nutritional network graph
 
@@ -662,8 +671,8 @@ def visualize_network(graph_data, max_nodes=100):
     plt.tight_layout()
 
     # Save the visualization
-    plt.savefig("nutritional_network.png", dpi=300, bbox_inches="tight")
-    print("Network visualization saved as 'nutritional_network.png'")
+    filename = f"{output_dir}/network.png"
+    plt.savefig(filename, bbox_inches="tight")
 
     # Show plot
     if SHOW_PLOT:
@@ -707,13 +716,11 @@ def calculate_centralities(
     return centrality
 
 
-def plot_centrality_histograms(
-    centrality_dict, network_name="Network", save_dir="plots"
-):
+def plot_centrality_histograms(centrality_dict, network_name="Network", output_dir="."):
     """Plot histograms for different centrality measures."""
     # Create directory if it doesn't exist
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     centrality_types = centrality_dict.keys()
 
@@ -728,8 +735,8 @@ def plot_centrality_histograms(
         plt.ylabel("Frequency")
         plt.grid(True, alpha=0.3)
 
-        filename = f"{save_dir}/{c_type}_centrality_{network_name.lower().replace(' ', '_')}.png"
-        plt.savefig(filename)
+        filename = f"{output_dir}/{c_type}_centrality_{network_name.lower().replace(' ', '_')}.png"
+        plt.savefig(filename, bbox_inches="tight")
 
         plt.close()
         print_result("Saved histogram", filename, indent=6)
@@ -749,15 +756,15 @@ def plot_centrality_histograms(
             axes[i].grid(True, alpha=0.3)
 
         plt.tight_layout()
-        filename = f"{save_dir}/combined_centrality_{network_name.lower().replace(' ', '_')}.png"
-        plt.savefig(filename)
+        filename = f"{output_dir}/combined_centrality_{network_name.lower().replace(' ', '_')}.png"
+        plt.savefig(filename, bbox_inches="tight")
         if SHOW_PLOT:
             plt.show()
         else:
             plt.close()
 
 
-def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plots"):
+def analyze_centrality_power_law(centrality_dict, show_plot=True, output_dir="."):
     """
     Analyze if the centrality distributions follow a power law.
 
@@ -767,8 +774,8 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
     - save_plots: Whether to save plot images
     """
     # Create directory if it doesn't exist
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     results = {}
 
     for centrality_type, centrality_values in centrality_dict.items():
@@ -859,8 +866,8 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
             plt.grid(True, alpha=0.3)
             plt.legend()
 
-            filename = f"{save_dir}/{centrality_type}_powerlaw.png"
-            plt.savefig(filename)
+            filename = f"{output_dir}/{centrality_type}_powerlaw.png"
+            plt.savefig(filename, bbox_inches="tight")
 
             if show_plot:
                 plt.show()
@@ -877,7 +884,7 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, save_dir="plot
     return results
 
 
-def plot_communities(G, communities, title):
+def plot_communities(G, communities, title, output_dir="."):
     plt.figure(figsize=(12, 8))
 
     # Map nodes to their community
@@ -908,6 +915,9 @@ def plot_communities(G, communities, title):
     plt.title(title)
     plt.axis("off")
     plt.tight_layout()
+
+    filename = f"{output_dir}/communities.png"
+    plt.savefig(filename, bbox_inches="tight")
     if SHOW_PLOT:
         plt.show()
     else:
@@ -1111,7 +1121,7 @@ def analyze_top_food_characteristics(
 
 
 def initialize_data(
-    data_dir="tmp", dataset="Fineli_Rel20", similarity_threshold=0.80, weighted=False
+    data_dir=".", dataset="Fineli_Rel20", similarity_threshold=0.80, weighted=False
 ):
     """Initialize data directory and create file paths for storing data."""
     os.makedirs(data_dir, exist_ok=True)
@@ -1138,7 +1148,7 @@ def initialize_data(
     return files, graph_data
 
 
-def analyze_centrality(G, files, show_plot=False):
+def analyze_centrality(G, files, show_plot=False, output_dir="."):
     """Analyze and visualize centrality measures."""
     print_task_header(3, "Visualize and plot the degree distribution")
     approximate = True
@@ -1159,7 +1169,7 @@ def analyze_centrality(G, files, show_plot=False):
                 "betweenness": centrality_measures["betweenness"],
             },
             "Approximation",
-            save_dir="plots/centrality",
+            output_dir=f"{output_dir}/centrality",
         )
     else:
         plot_centrality_histograms(
@@ -1169,12 +1179,12 @@ def analyze_centrality(G, files, show_plot=False):
                 "betweenness": centrality_measures["betweenness"],
             },
             "full",
-            save_dir="plots/centrality",
+            output_dir=f"{output_dir}/centrality",
         )
 
     print_task_header(4, "Provide the script for drawing power law distributions")
     results = analyze_centrality_power_law(
-        centrality_measures, show_plot=show_plot, save_dir="plots/powerlaw"
+        centrality_measures, show_plot=show_plot, output_dir=f"{output_dir}/powerlaw"
     )
 
     return centrality_measures, results
@@ -1204,7 +1214,7 @@ def analyze_clustering(G, files, show_plot=False, output_dir="."):
     plt.grid(axis="y", linestyle="--")
 
     filename = f"{output_dir}/clustering_histogram.png"
-    plt.savefig(filename)
+    plt.savefig(filename, bbox_inches="tight")
 
     if show_plot:
         plt.show()
@@ -1214,7 +1224,7 @@ def analyze_clustering(G, files, show_plot=False, output_dir="."):
     return node_clustering_coefficients
 
 
-def detect_communities(G, files, show_plot=False):
+def detect_communities(G, files, show_plot=False, output_dir="."):
     """Detect communities using Girvan-Newman and Louvain algorithms."""
     print_task_header(6, "Detect communities within the nutritional network")
 
@@ -1239,9 +1249,8 @@ def detect_communities(G, files, show_plot=False):
     # Visualize communities
     if show_plot:
         plot_communities(
-            G, gn_communities, "Communities detected by Girvan-Newman algorithm"
+            G, louvain_comms, "Communities detected by Louvain algorithm", output_dir
         )
-        plot_communities(G, louvain_comms, "Communities detected by Louvain algorithm")
 
     # Display community statistics
     print_result(
@@ -1257,7 +1266,7 @@ def detect_communities(G, files, show_plot=False):
 
 
 def analyze_nutritional_composition(
-    graph_data, communities, dataset, key_nutrients=default_nutrients
+    graph_data, communities, dataset, key_nutrients=default_nutrients, output_dir="."
 ):
     """Analyze the nutritional composition of communities."""
     print_task_header(7, "Analyze Community Nutritional Composition")
@@ -1278,7 +1287,9 @@ def analyze_nutritional_composition(
 
     # Visualize differences
     print("\nGenerating visualizations to compare communities...")
-    visualize_community_differences(community_nutrition, component_names, key_nutrients)
+    visualize_community_differences(
+        community_nutrition, component_names, key_nutrients, output_dir
+    )
 
     return community_nutrition, component_names
 
@@ -1361,7 +1372,7 @@ def pagerank(G, dampening=0.85, output_dir="."):
     plt.title("Top 10 Influential Food Items by PageRank Score")
     plt.tight_layout()
     filename = f"{output_dir}/pagerank_score.png"
-    plt.savefig(filename)
+    plt.savefig(filename, bbox_inches="tight")
     plt.show()
     if SHOW_PLOT:
         plt.close()
@@ -1409,7 +1420,7 @@ def pagerank(G, dampening=0.85, output_dir="."):
     ax.set_axis_off()  # Turn off axis
     plt.tight_layout()
     filename = f"{output_dir}/pagerank_network.png"
-    plt.savefig(filename)
+    plt.savefig(filename, bbox_inches="tight")
     plt.show()
     if SHOW_PLOT:
         plt.close()
@@ -1934,7 +1945,7 @@ def analyze_nutritional_assortativity(
     return results
 
 
-def k_core_analyzis(G):
+def k_core_analyzis(G, output_dir="."):
     # Compute the core number for each node
     core_numbers = nx.core_number(G)
 
@@ -1951,7 +1962,8 @@ def k_core_analyzis(G):
     plt.xlabel("Core Number")
     plt.ylabel("Number of Nodes")
     plt.title("Distribution of Core Numbers")
-    plt.savefig("core_distribution.png")
+    filename = f"{output_dir}/core_distribution.png"
+    plt.savefig(filename, bbox_inches="tight")
 
     # Select representative k values (e.g., min, 25%, 50%, 75%, max)
     k_values = [
@@ -1976,7 +1988,8 @@ def k_core_analyzis(G):
             pos = nx.spring_layout(k_core, seed=42)
             nx.draw(k_core, pos, node_size=50, with_labels=False)
             plt.title(f"k-core (k={k})")
-            plt.savefig(f"k_core_{k}.png")
+            filename = f"{output_dir}/k_core_{k}.png"
+            plt.savefig(filename, bbox_inches="tight")
 
     # Group nodes by their core number
     nodes_by_core = {}
@@ -2034,11 +2047,12 @@ def k_core_analyzis(G):
     plt.title("Average Clustering vs Core Number")
 
     plt.tight_layout()
-    plt.savefig("core_properties.png")
+    filename = f"{output_dir}/core_properties.png"
+    plt.savefig(filename, bbox_inches="tight")
 
 
 def run_nutritional_network_analysis(
-    data_dir="tmp",
+    output_dir="tmp",
     dataset="Fineli_Rel20",
     similarity_threshold=0.80,
     show_plot=False,
@@ -2048,39 +2062,42 @@ def run_nutritional_network_analysis(
     """Main function to run the complete nutritional network analysis."""
     # Initialize data
     files, graph_data = initialize_data(
-        data_dir, dataset, similarity_threshold, weighted
+        output_dir, dataset, similarity_threshold, weighted
     )
 
     G = graph_data["graph"]
 
-    filename = (
-        f'{data_dir}/graph_{similarity_threshold}{"_weighted" if weighted else ""}.gexf'
-    )
+
+    filename = f'{output_dir}/graph_{similarity_threshold}{"_weighted" if weighted else ""}.gexf'
+
     if not os.path.isfile(filename):
         nx.write_gexf(G, filename)
         print("Saved gexf to", filename)
     else:
         print("File found, not saving")
 
-    filename = f'{data_dir}/graph_{similarity_threshold}{"_weighted" if weighted else ""}.graphml'
+    filename = f'{output_dir}/graph_{similarity_threshold}{"_weighted" if weighted else ""}.graphml'
     if not os.path.isfile(filename):
         nx.write_graphml(G, filename)
         print("Saved graphml to", filename)
     else:
         print("File found, not saving")
 
+    if show_plot:
+        visualize_network(graph_data, max_nodes=300, output_dir=output_dir)
+
     # Analyze centrality
-    centrality_measures, _ = analyze_centrality(G, files, show_plot)
+    centrality_measures, _ = analyze_centrality(G, files, show_plot, output_dir)
 
     # Analyze clustering
-    analyze_clustering(G, files, show_plot, data_dir)
+    analyze_clustering(G, files, show_plot, output_dir)
 
     # Detect communities
-    gn_communities, louvain_comms = detect_communities(G, files)
+    _, louvain_comms = detect_communities(G, files, show_plot, output_dir)
 
     # Analyze nutritional composition
     community_nutrition, component_names = analyze_nutritional_composition(
-        graph_data, louvain_comms, dataset, key_nutrients
+        graph_data, louvain_comms, dataset, key_nutrients, output_dir
     )
 
     # Analyze similar foods
@@ -2093,7 +2110,7 @@ def run_nutritional_network_analysis(
         community_nutrition, component_names, community_top_foods, top_food_analysis
     )
 
-    pagerank(G, output_dir=data_dir)
+    pagerank(G, output_dir=output_dir)
 
     # Analyze network assortativity
     assortativity_results = analyze_nutritional_assortativity(
@@ -2358,15 +2375,15 @@ else:
 
 if __name__ == "__main__":
     # Define constants
-    SHOW_PLOT = False
-    DATA_DIR = "tmp"
-    DATA_DIR_WEIGHTED = "tmp_weighted"
-    DATASET = "Fineli_Rel20"
+    SHOW_PLOT = True
     SIMILARITY_THRESHOLD = 0.8
+    OUTPUT_DIR = f"tmp_{SIMILARITY_THRESHOLD}"
+    OUTPUT_DIR_WEIGHTED = f"tmp_weighted_{SIMILARITY_THRESHOLD}"
+    DATASET = "Fineli_Rel20"
 
     # Run analysis with default parameters
     network_analysis = run_nutritional_network_analysis(
-        data_dir=DATA_DIR,
+        output_dir=OUTPUT_DIR,
         dataset=DATASET,
         similarity_threshold=SIMILARITY_THRESHOLD,
         show_plot=SHOW_PLOT,
@@ -2376,7 +2393,7 @@ if __name__ == "__main__":
     print_task_header(9, "Repeat 3-8 with weighted graph")
     # Run analysis with weighted parameters
     weighted_network_analysis = run_nutritional_network_analysis(
-        data_dir=DATA_DIR_WEIGHTED,
+        output_dir=OUTPUT_DIR_WEIGHTED,
         dataset=DATASET,
         similarity_threshold=SIMILARITY_THRESHOLD,
         show_plot=SHOW_PLOT,
