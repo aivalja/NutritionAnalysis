@@ -212,7 +212,9 @@ def load_fineli_data(data_dir="."):
     }
 
 
-def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted=False):
+def create_nutritional_network(
+    data_dir=".", similarity_threshold=0.85, weighted=False, k=50, use_topk=True
+):
     """
     Creates a nutritional network graph where:
     - Nodes represent food items
@@ -333,20 +335,17 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
     for i, (food_id, food_name) in enumerate(zip(food_ids, food_names)):
         G.add_node(food_id, name=food_name)
 
-    if weighted:
-        # Add edges based on similarity threshold
+    if use_topk:
+        # For each node, add edges only to its k most similar foods
         for i, food_id_i in enumerate(food_ids):
-            for j, food_id_j in enumerate(food_ids[i + 1 :], start=i + 1):
-                similarity = similarity_matrix[i, j]
-                if similarity >= similarity_threshold:
-                    G.add_edge(food_id_i, food_id_j)
-    else:
-        # Add edges based on similarity with weights
-        for i, food_id_i in enumerate(food_ids):
-            for j, food_id_j in enumerate(food_ids[i + 1 :], start=i + 1):
-                similarity = similarity_matrix[i, j]
-                if similarity >= similarity_threshold:
-                    # Scale similarity from [similarity_threshold, 1] to [0.01, 1]
+            # Get top k similar foods (excluding self-similarity)
+            similarities = similarity_matrix[i]
+            top_indices = np.argsort(similarities)[::-1][1 : k + 1]
+
+            for j in top_indices:
+                food_id_j = food_ids[j]
+                similarity = similarities[j]
+                if weighted:
                     scaled_weight = (
                         0.01
                         + (
@@ -356,6 +355,34 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
                         * 0.99
                     )
                     G.add_edge(food_id_i, food_id_j, weight=scaled_weight)
+                else:
+                    G.add_edge(food_id_i, food_id_j)
+
+    else:
+
+        if not weighted:
+            # Add edges based on similarity threshold
+            for i, food_id_i in enumerate(food_ids):
+                for j, food_id_j in enumerate(food_ids[i + 1 :], start=i + 1):
+                    similarity = similarity_matrix[i, j]
+                    if similarity >= similarity_threshold:
+                        G.add_edge(food_id_i, food_id_j)
+        else:
+            # Add edges based on similarity with weights
+            for i, food_id_i in enumerate(food_ids):
+                for j, food_id_j in enumerate(food_ids[i + 1 :], start=i + 1):
+                    similarity = similarity_matrix[i, j]
+                    if similarity >= similarity_threshold:
+                        # Scale similarity from [similarity_threshold, 1] to [0.01, 1]
+                        scaled_weight = (
+                            0.01
+                            + (
+                                (similarity - similarity_threshold)
+                                / (1.0 - similarity_threshold)
+                            )
+                            * 0.99
+                        )
+                        G.add_edge(food_id_i, food_id_j, weight=scaled_weight)
 
     print(
         f"Created graph with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges"
@@ -632,7 +659,7 @@ def visualize_community_differences(
             plt.close()
 
 
-def visualize_network(graph_data, max_nodes=100, output_dir="."):
+def visualize_network(graph_data, max_nodes=100, output_dir=".", show_plot=True):
     """
     Visualizes the nutritional network graph
 
@@ -683,7 +710,7 @@ def visualize_network(graph_data, max_nodes=100, output_dir="."):
     plt.savefig(filename, bbox_inches="tight")
 
     # Show plot
-    if SHOW_PLOT:
+    if show_plot:
         plt.show()
     else:
         plt.close()
@@ -1154,6 +1181,8 @@ def initialize_data(
         calculate_kwargs={
             "similarity_threshold": similarity_threshold,
             "weighted": weighted,
+            "k": 50,
+            "use_topk": True,
         },
         description="graph data",
     )
@@ -1366,7 +1395,7 @@ def display_results(
         print("-" * 80)
 
 
-def pagerank(G, dampening=0.85, output_dir="."):
+def pagerank(G, dampening=0.85, output_dir=".", show_plot=True):
     # Calculate PageRank scores
     pagerank_scores = nx.pagerank(G, alpha=dampening)
 
@@ -1388,8 +1417,10 @@ def pagerank(G, dampening=0.85, output_dir="."):
     plt.tight_layout()
     filename = f"{output_dir}/pagerank_score.png"
     plt.savefig(filename, bbox_inches="tight")
-    plt.show()
-    if SHOW_PLOT:
+
+    if show_plot:
+        plt.show()
+    else:
         plt.close()
 
     # Create network visualization of top 10 items
@@ -1436,8 +1467,10 @@ def pagerank(G, dampening=0.85, output_dir="."):
     plt.tight_layout()
     filename = f"{output_dir}/pagerank_network.png"
     plt.savefig(filename, bbox_inches="tight")
-    plt.show()
-    if SHOW_PLOT:
+
+    if show_plot:
+        plt.show()
+    else:
         plt.close()
 
 
@@ -1787,8 +1820,9 @@ def run_nutritional_network_analysis(
     else:
         print("File found, not saving")
 
-    if show_plot:
-        visualize_network(graph_data, max_nodes=300, output_dir=output_dir)
+    visualize_network(
+        graph_data, max_nodes=300, output_dir=output_dir, show_plot=show_plot
+    )
 
     # Analyze centrality
     centrality_measures, _ = analyze_centrality(G, files, show_plot, output_dir)
@@ -1801,7 +1835,7 @@ def run_nutritional_network_analysis(
 
     # Analyze nutritional composition
     community_nutrition, component_names = analyze_nutritional_composition(
-        graph_data, louvain_comms, dataset, key_nutrients, output_dir
+        graph_data, louvain_comms, dataset, nutrients, output_dir
     )
 
     # Analyze similar foods
@@ -1814,7 +1848,7 @@ def run_nutritional_network_analysis(
         community_nutrition, component_names, community_top_foods, top_food_analysis
     )
 
-    pagerank(G, output_dir=output_dir)
+    pagerank(G, output_dir=output_dir, show_plot=show_plot)
 
     assortativity_results = load_or_calculate(
         files["assortativity"],
