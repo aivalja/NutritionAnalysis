@@ -1859,6 +1859,9 @@ def run_nutritional_network_analysis(
         output_dir=output_dir,
     )
 
+    hits_analyzis(graph_data, output_dir=output_dir, show_plot=show_plot)
+
+
     return {
         "graph": G,
         "centrality_measures": centrality_measures,
@@ -1866,6 +1869,167 @@ def run_nutritional_network_analysis(
         "community_nutrition": community_nutrition,
         "assortativity_results": assortativity_results,
     }
+
+
+def hits_analyzis(graph_data, output_dir=".", show_plot=True):
+    """HITS analyzis"""
+    G = graph_data["graph"]
+    food_mapping = graph_data["food_mapping"]
+
+    # Apply the HITS algorithm to graph G
+    hub_scores, authority_scores = nx.hits(G, max_iter=100, normalized=True)
+
+    hub_df = pd.DataFrame(
+        {
+            "node": [food_mapping[node_id] for node_id in hub_scores.keys()],
+            "hub_score": list(hub_scores.values()),
+        }
+    )
+    auth_df = pd.DataFrame(
+        {
+            "node": [food_mapping[node_id] for node_id in authority_scores.keys()],
+            "authority_score": list(authority_scores.values()),
+        }
+    )
+
+    # Sort by scores in descending order
+    hub_df = hub_df.sort_values("hub_score", ascending=False)
+    auth_df = auth_df.sort_values("authority_score", ascending=False)
+
+    # Print top 10 hubs and authorities
+    print("Top 10 Hubs:")
+    print(hub_df.head(10))
+    print("\nTop 10 Authorities:")
+    print(auth_df.head(10))
+
+    # Visualize top hubs and authorities
+    def visualize_top_nodes(G, scores, title, top_n=10):
+        # Get top N nodes by score
+        top_nodes = dict(
+            sorted(scores.items(), key=lambda x: x[1], reverse=True)[:top_n]
+        )
+
+        # Create subgraph with only the top nodes
+        subgraph = G.subgraph(top_nodes.keys())
+
+        # Set up visualization
+        plt.figure(figsize=(12, 8))
+        pos = nx.spring_layout(subgraph, seed=42)  # For reproducible layout
+
+        # Node sizes based on scores
+        node_sizes = [score * 1000 for node, score in top_nodes.items()]
+
+        # Add node labels (food names) with smaller font
+        labels = {node: food_mapping[node] for node in subgraph.nodes()}
+        # nx.draw_networkx_labels(
+        #     subgraph, pos, labels=labels, font_size=8, font_family="sans-serif"
+        # )
+
+        # Draw the network
+        nx.draw_networkx(
+            subgraph,
+            pos=pos,
+            node_size=node_sizes,
+            node_color="skyblue",
+            with_labels=True,
+            font_size=10,
+            labels=labels,
+            arrows=True,
+        )
+
+        plt.title(title)
+        plt.axis("off")
+        plt.tight_layout()
+
+        filename = f"{output_dir}/HITS_top_nodes.png"
+        plt.savefig(filename, bbox_inches="tight")
+
+        if show_plot:
+            plt.show()
+        else:
+            plt.close()
+
+    # Visualize top hubs
+    visualize_top_nodes(G, hub_scores, "Top Hubs in Nutritional Network")
+
+    # Visualize top authorities
+    visualize_top_nodes(G, authority_scores, "Top Authorities in Nutritional Network")
+
+    # Combined visualization of both hubs and authorities
+    def visualize_combined(G, hub_scores, authority_scores, top_n=5):
+        # Get top nodes
+        top_hubs = dict(
+            sorted(hub_scores.items(), key=lambda x: x[1], reverse=True)[:top_n]
+        )
+        top_auths = dict(
+            sorted(authority_scores.items(), key=lambda x: x[1], reverse=True)[:top_n]
+        )
+
+        # Combine unique nodes
+        nodes = set(list(top_hubs.keys()) + list(top_auths.keys()))
+        subgraph = G.subgraph(nodes)
+
+        plt.figure(figsize=(12, 8))
+        pos = nx.spring_layout(subgraph, seed=42)
+
+        # Draw different types of nodes
+        hub_only = [n for n in top_hubs if n not in top_auths]
+        auth_only = [n for n in top_auths if n not in top_hubs]
+        both = [n for n in top_hubs if n in top_auths]
+
+        nx.draw_networkx_edges(subgraph, pos, alpha=0.4)
+
+        # Add node labels (food names) with smaller font
+        labels = {node: food_mapping[node] for node in subgraph.nodes()}
+        # nx.draw_networkx_labels(
+        #     subgraph, pos, labels=labels, font_size=8, font_family="sans-serif"
+        # )
+
+        # Draw the nodes with different colors
+        nx.draw_networkx_nodes(
+            subgraph,
+            pos,
+            nodelist=hub_only,
+            node_color="blue",
+            node_size=500,
+            label="Hubs",
+        )
+        nx.draw_networkx_nodes(
+            subgraph,
+            pos,
+            nodelist=auth_only,
+            node_color="red",
+            node_size=500,
+            label="Authorities",
+        )
+        nx.draw_networkx_nodes(
+            subgraph,
+            pos,
+            nodelist=both,
+            node_color="purple",
+            node_size=700,
+            label="Both",
+        )
+
+        # Draw edges and labels
+        nx.draw_networkx_edges(subgraph, pos, arrows=True, alpha=0.5)
+        nx.draw_networkx_labels(subgraph, pos, labels=labels)
+
+        plt.title("Top Hubs and Authorities in Nutritional Network")
+        plt.legend()
+        plt.axis("off")
+        plt.tight_layout()
+
+        filename = f"{output_dir}/HITS_combined.png"
+        plt.savefig(filename, bbox_inches="tight")
+
+        if show_plot:
+            plt.show()
+        else:
+            plt.close()
+
+    # Visualize combined
+    visualize_combined(G, hub_scores, authority_scores)
 
 
 if 0:
