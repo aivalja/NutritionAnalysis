@@ -14,6 +14,7 @@ from networkx.algorithms.community.centrality import girvan_newman
 from networkx.algorithms.community import louvain_communities
 import seaborn as sns
 from tqdm import tqdm
+from adjustText import adjust_text
 
 
 SHOW_PLOT = False
@@ -503,9 +504,6 @@ def visualize_community_differences(
     # Filter to nutrients that exist in our data
     available_nutrients = [n for n in nutrients if n in community_nutrition.columns]
 
-    # Get proper names for nutrients
-    nutrient_names = [component_names.get(n, n) for n in available_nutrients]
-
     # Create a copy of the data for plotting
     plot_data = community_nutrition.copy()
 
@@ -518,48 +516,10 @@ def visualize_community_differences(
         else:
             plot_data[nutrient] = 0  # If all values are the same, set to 0
 
-    # 1. BAR CHART: Compare key nutrients across communities
-    plt.figure(figsize=(14, 8))
-
     # Set up the number of bars and positions
     n_communities = len(plot_data)
-    n_nutrients = len(available_nutrients)
-    bar_width = 0.8 / n_communities
 
-    # Create positions for each group of bars
-    positions = np.arange(n_nutrients)
-
-    # Plot bars for each community
-    for i, (_, row) in enumerate(plot_data.iterrows()):
-        community_id = int(row["community_id"])
-        offset = (i - n_communities / 2) * bar_width + bar_width / 2
-
-        # Get normalized values for this community
-        values = [row[nutrient] for nutrient in available_nutrients]
-
-        # Plot bars
-        plt.bar(
-            positions + offset,
-            values,
-            width=bar_width,
-            label=f"Community {community_id} (n={int(row['size'])})",
-        )
-
-    # Set labels and title
-    plt.xlabel("Nutrients")
-    plt.ylabel("Normalized Average Value (0 to 1)")
-    plt.title("Normalized Comparison of Key Nutrients Across Food Communities")
-    plt.xticks(positions, nutrient_names, rotation=45, ha="right")
-    plt.legend()
-    plt.tight_layout()
-    filename = f"{output_dir}/nurtient_bar_graph.png"
-    plt.savefig(filename, bbox_inches="tight")
-    if show_plot:
-        plt.show()
-    else:
-        plt.close()
-
-    # 2. HEATMAP: Show relative nutrient composition
+    # 1. HEATMAP: Show relative nutrient composition
     plt.figure(figsize=(14, 10))
 
     # Prepare data for heatmap
@@ -595,7 +555,7 @@ def visualize_community_differences(
     else:
         plt.close()
 
-    # 3. RADAR CHART: Profile of each community
+    # 2. RADAR CHART: Profile of each community
     # Only include if number of communities is manageable (≤ 6)
     if n_communities <= 6:
         # Prepare data for radar chart
