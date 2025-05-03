@@ -340,18 +340,20 @@ def create_nutritional_network(
         for i, food_id_i in enumerate(food_ids):
             # Get top k similar foods (excluding self-similarity)
             similarities = similarity_matrix[i]
-            top_indices = np.argsort(similarities)[::-1][1 : k + 1]
+            top_indices = np.argsort(similarities)[::-1][0:k]
 
             for j in top_indices:
                 food_id_j = food_ids[j]
-                similarity = similarities[j]
-                if weighted:
-                    G.add_edge(food_id_i, food_id_j, weight=similarity)
-                else:
-                    G.add_edge(food_id_i, food_id_j)
+                # Add this check to prevent self-loops
+                if food_id_i != food_id_j:
+                    similarity = similarities[j]
+                    if similarity >= similarity_threshold:
+                        if weighted:
+                            G.add_edge(food_id_i, food_id_j, weight=similarity)
+                        else:
+                            G.add_edge(food_id_i, food_id_j)
 
     else:
-
         if not weighted:
             # Add edges based on similarity threshold
             for i, food_id_i in enumerate(food_ids):
@@ -833,7 +835,17 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, output_dir="."
 
         # Fit power law (need to handle zeros for some centrality measures)
         # Add a small constant to avoid zeros which powerlaw can't handle
-        min_non_zero = min([v for v in values if v > 0]) / 10
+        # Check if there are any positive values
+        positive_values = [v for v in values if v > 0]
+        if not positive_values:
+            print_result(
+                f"{centrality_type.capitalize()} distribution analysis",
+                "No positive values found for analysis",
+            )
+            continue
+
+        # Now safely find minimum non-zero value
+        min_non_zero = min(positive_values) / 10
         adjusted_values = [v if v > 0 else min_non_zero for v in values]
 
         fit = powerlaw.Fit(adjusted_values, discrete=False)
@@ -1205,7 +1217,7 @@ def analyze_centrality(G, files, show_plot=False, output_dir=".", weighted=True)
         files["centrality"],
         calculate_centralities,
         calculate_args=[G],
-        calculate_kwargs={"use_approximation": approximate, "weighted": weighted},
+        calculate_kwargs={"use_approximation": approximate},
         description="centrality measures",
     )
 
