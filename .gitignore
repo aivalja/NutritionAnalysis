@@ -177,3 +177,4 @@ cython_debug/
 preprocessed*
 food_centrality_measures.csv
 tmp/
+tmp*/
