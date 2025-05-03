@@ -1461,10 +1461,7 @@ def pagerank(G, dampening=0.85, output_dir=".", show_plot=True):
 
     # Create figure with explicit axes
     fig, ax = plt.subplots(figsize=(12, 8))
-    pos = nx.spring_layout(subgraph, seed=42)  # For layout reproducibility
-
-    # Node sizes proportional to PageRank scores
-    node_sizes = [pagerank_scores[node] * 20000 for node in subgraph.nodes()]
+    pos = nx.spring_layout(subgraph, seed=42, k=0.5)  # Increase 'k' for more spacing
 
     # Create a mapping of node IDs to food names for labels
     node_labels = {node: G.nodes[node]["name"] for node in subgraph.nodes()}
@@ -1473,19 +1470,25 @@ def pagerank(G, dampening=0.85, output_dir=".", show_plot=True):
     node_colors = [pagerank_scores[node] for node in subgraph.nodes()]
     cmap = plt.cm.Reds
 
-    # Draw the network
-    nx.draw_networkx(
+    # Draw the network (without labels initially)
+    nx.draw_networkx_nodes(
         subgraph,
         pos=pos,
-        node_size=node_sizes,
         node_color=node_colors,
         cmap=cmap,
-        font_size=10,
-        width=1.5,
-        edge_color="gray",
-        labels=node_labels,
-        ax=ax,  # Use the specific axis
+        ax=ax,
     )
+    nx.draw_networkx_edges(subgraph, pos=pos, width=1.5, edge_color="gray", ax=ax)
+
+    # Add labels manually and collect them for adjustment
+    texts = []
+    for node, label in node_labels.items():
+        x, y = pos[node]
+        text = ax.text(x, y, label, fontsize=10, ha="center", va="center")
+        texts.append(text)
+
+    # Adjust text positions to avoid overlap
+    adjust_text(texts, arrowprops=dict(arrowstyle="-", color="black", lw=0.5))
 
     # Add colorbar with explicit axes reference
     sm = plt.cm.ScalarMappable(
