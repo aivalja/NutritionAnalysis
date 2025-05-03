@@ -314,7 +314,8 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
     unprocessed = [col for col in nutrient_cols if col not in processed_nutrients]
     if unprocessed:
         print(
-            f"Warning: {len(unprocessed)} nutrients ({unprocessed}) were not assigned to any group. Applying default weight."
+            f"Warning: {len(unprocessed)} nutrients ({unprocessed}) were not\
+              assigned to any group. Applying default weight."
         )
         for col in unprocessed:
             # Use the pre-scaled values and apply default weight
@@ -369,9 +370,7 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
     }
 
 
-def analyze_community_nutrition(
-    graph_data, communities, key_nutrients=default_nutrients
-):
+def analyze_community_nutrition(graph_data, communities, nutrients=None):
     """
     Analyzes the nutritional composition of each community
 
@@ -382,6 +381,9 @@ def analyze_community_nutrition(
     Returns:
         DataFrame containing average nutritional values for each community
     """
+    if nutrients is None:
+        nutrients = default_nutrients
+
     food_nutrients = graph_data["food_nutrients"]
 
     # Fill any remaining NaN values with 0 to ensure calculations work correctly
@@ -400,7 +402,7 @@ def analyze_community_nutrition(
             continue
 
         # Calculate average nutritional values
-        avg_nutrients = community_foods[key_nutrients].mean().to_dict()
+        avg_nutrients = community_foods[nutrients].mean().to_dict()
 
         # Add community info
         avg_nutrients["community_id"] = i
@@ -419,7 +421,7 @@ def analyze_community_nutrition(
 
 
 def create_community_summary_table(
-    community_nutrition, component_names, key_nutrients=default_nutrients
+    community_nutrition, component_names, nutrients=None
 ):
     """
     Creates a summary table of key nutritional values across communities.
@@ -432,9 +434,11 @@ def create_community_summary_table(
     Returns:
         Formatted summary DataFrame
     """
+    if nutrients is None:
+        nutrients = default_nutrients
 
     # Filter nutrients that exist in our datakey_nutrients
-    available_nutrients = [n for n in key_nutrients if n in community_nutrition.columns]
+    available_nutrients = [n for n in nutrients if n in community_nutrition.columns]
 
     # Create a new DataFrame for the summary
     summary_data = []
@@ -460,7 +464,7 @@ def create_community_summary_table(
 def visualize_community_differences(
     community_nutrition,
     component_names,
-    key_nutrients=default_nutrients,
+    nutrients=None,
     output_dir=".",
 ):
     """
@@ -471,9 +475,11 @@ def visualize_community_differences(
         component_names: Dictionary mapping component codes to readable names
         key_nutrients: List of nutrient codes to include
     """
+    if nutrients is None:
+        nutrients = default_nutrients
 
     # Filter to nutrients that exist in our data
-    available_nutrients = [n for n in key_nutrients if n in community_nutrition.columns]
+    available_nutrients = [n for n in nutrients if n in community_nutrition.columns]
 
     # Get proper names for nutrients
     nutrient_names = [component_names.get(n, n) for n in available_nutrients]
@@ -580,10 +586,10 @@ def visualize_community_differences(
                 radar_data[col] = radar_data[col] / max_val
 
         # Number of variables
-        N = len(available_nutrients)
+        variable_count = len(available_nutrients)
 
         # Compute angle for each axis
-        angles = [n / float(N) * 2 * np.pi for n in range(N)]
+        angles = [n / float(variable_count) * 2 * np.pi for n in range(variable_count)]
         angles += angles[:1]  # Close the loop
 
         # Initialize the figure
@@ -656,8 +662,10 @@ def visualize_network(graph_data, max_nodes=100, output_dir="."):
     # Draw nodes
     nx.draw_networkx_nodes(G_viz, pos, node_size=100, alpha=0.7)
 
-    # Draw edges with weights affecting thickness
-    edge_weights = [G_viz.get_edge_data(u, v)["weight"] * 2 for u, v in G_viz.edges()]
+    # Draw edges with weights affecting thickness (use 1 if no weight assigned)
+    edge_weights = [
+        G_viz.get_edge_data(u, v).get("weight", 1) * 2 for u, v in G_viz.edges()
+    ]
     nx.draw_networkx_edges(G_viz, pos, width=edge_weights, alpha=0.4)
 
     # Add node labels (food names) with smaller font
@@ -885,6 +893,7 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, output_dir="."
 
 
 def plot_communities(G, communities, title, output_dir="."):
+    """Plot communities"""
     plt.figure(figsize=(12, 8))
 
     # Map nodes to their community
@@ -925,6 +934,7 @@ def plot_communities(G, communities, title, output_dir="."):
 
 
 def calculate_community_stats(G, communities):
+    """Calculate community stats"""
     stats = []
 
     for i, comm in enumerate(communities):
@@ -970,8 +980,8 @@ def calculate_community_stats(G, communities):
 
 def find_top_similar_foods_in_communities(graph_data, communities, top_n=10):
     """
-    Identifies the top-N individual food items within each community based on average nutritional similarity
-    to other foods in the same community.
+    Identifies the top-N individual food items within each community based on
+    average nutritional similarity to other foods in the same community.
 
     Args:
         graph_data: Dictionary containing graph, food mapping, and similarity matrix
@@ -1026,7 +1036,7 @@ def find_top_similar_foods_in_communities(graph_data, communities, top_n=10):
 
 
 def analyze_top_food_characteristics(
-    graph_data, community_top_foods, component_names, key_nutrients=default_nutrients
+    graph_data, community_top_foods, component_names, nutrients=None
 ):
     """
     Analyzes characteristics of top similar food items in each community to identify trends.
@@ -1040,12 +1050,14 @@ def analyze_top_food_characteristics(
     Returns:
         Dictionary with community ID as key and analysis summary as value
     """
+    if nutrients is None:
+        nutrients = default_nutrients
     food_nutrients = graph_data["food_nutrients"]
 
     # Calculate global averages for normalization
 
-    global_avg = food_nutrients[key_nutrients].mean()
-    global_std = food_nutrients[key_nutrients].std()
+    global_avg = food_nutrients[nutrients].mean()
+    global_std = food_nutrients[nutrients].std()
 
     analysis_results = {}
 
@@ -1064,11 +1076,11 @@ def analyze_top_food_characteristics(
         relevant_foods = food_nutrients[food_nutrients["FOODID"].isin(food_ids_top)]
 
         # Calculate average values for key nutrients
-        avg_nutrients = relevant_foods[key_nutrients].mean()
+        avg_nutrients = relevant_foods[nutrients].mean()
 
         # Identify dominant characteristics using z-scores
         nutrient_values = []
-        for code in key_nutrients:
+        for code in nutrients:
             if not pd.isna(avg_nutrients[code]) and global_std[code] > 0:
                 # Calculate z-score: how many standard deviations from the mean
                 z_score = (avg_nutrients[code] - global_avg[code]) / global_std[code]
@@ -1131,6 +1143,7 @@ def initialize_data(
         "gn_communities": os.path.join(data_dir, "gn_communities.pkl"),
         "louvain_communities": os.path.join(data_dir, "louvain_communities.pkl"),
         "clustering": os.path.join(data_dir, "clustering.pkl"),
+        "assortativity": os.path.join(data_dir, "assortativity.pkl"),
     }
 
     # Load or calculate graph data
@@ -1266,43 +1279,45 @@ def detect_communities(G, files, show_plot=False, output_dir="."):
 
 
 def analyze_nutritional_composition(
-    graph_data, communities, dataset, key_nutrients=default_nutrients, output_dir="."
+    graph_data, communities, dataset, nutrients=None, output_dir="."
 ):
     """Analyze the nutritional composition of communities."""
+    if nutrients is None:
+        nutrients = default_nutrients
     print_task_header(7, "Analyze Community Nutritional Composition")
 
     # Load component name mappings
     component_names = load_component_names(dataset)
 
     community_nutrition = analyze_community_nutrition(
-        graph_data, communities, key_nutrients
+        graph_data, communities, nutrients
     )
 
     # Generate summary table
     print("\nSummary Table of Community Nutritional Differences:")
     summary_table = create_community_summary_table(
-        community_nutrition, component_names, key_nutrients
+        community_nutrition, component_names, nutrients
     )
     print(summary_table)
 
     # Visualize differences
     print("\nGenerating visualizations to compare communities...")
     visualize_community_differences(
-        community_nutrition, component_names, key_nutrients, output_dir
+        community_nutrition, component_names, nutrients, output_dir
     )
 
     return community_nutrition, component_names
 
 
-def analyze_top_similar_foods(
-    graph_data, communities, component_names, key_nutrients=default_nutrients
-):
+def analyze_top_similar_foods(graph_data, communities, component_names, nutrients=None):
     """Find and analyze the top similar foods within communities."""
+    if nutrients is None:
+        nutrients = default_nutrients
     community_top_foods = find_top_similar_foods_in_communities(graph_data, communities)
 
     print_task_header(8, "Identify the top-10 most similar food items")
     top_food_analysis = analyze_top_food_characteristics(
-        graph_data, community_top_foods, component_names, key_nutrients
+        graph_data, community_top_foods, component_names, nutrients
     )
 
     print(f"Found {len(communities)} communities")
@@ -1439,12 +1454,6 @@ def analyze_network_assortativity(network_data, attribute_names=None, n_bins=5):
     Returns:
         Dictionary containing assortativity coefficients and visualization
     """
-    import networkx as nx
-    import numpy as np
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
     G = network_data["graph"]
     food_nutrients = network_data["food_nutrients"]
 
@@ -1467,7 +1476,7 @@ def analyze_network_assortativity(network_data, attribute_names=None, n_bins=5):
     results = {}
 
     # Calculate assortativity for each attribute
-    for attr in valid_attrs:
+    for attr in tqdm(valid_attrs):
         # Get attribute values for all nodes
         attr_values = {}
         for node in G.nodes():
@@ -1507,6 +1516,11 @@ def analyze_network_assortativity(network_data, attribute_names=None, n_bins=5):
             "categorical_assortativity": categorical_assortativity,
         }
 
+    return results
+
+
+def plot_assortativity(results, show_plot=False, output_dir="."):
+    """Plot assortativity"""
     # Create visualization
     fig1, ax = plt.subplots(figsize=(12, 6))
 
@@ -1545,6 +1559,14 @@ def analyze_network_assortativity(network_data, attribute_names=None, n_bins=5):
     ax.legend()
 
     plt.tight_layout()
+    filename = f"{output_dir}/nutrient_assortativity_bar_chart.png"
+    plt.savefig(filename, bbox_inches="tight")
+
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
+
     plt.show()
 
     # Add interpretation
@@ -1609,20 +1631,23 @@ def analyze_network_assortativity(network_data, attribute_names=None, n_bins=5):
     )
     plt.title("Nutrient Assortativity Heatmap")
     plt.tight_layout()
-    plt.show()
+    filename = f"{output_dir}/nutrient_assortativity_heatmap.png"
+    plt.savefig(filename, bbox_inches="tight")
+
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
 
     return {
         "results": results,
         "attributes": attrs,
         "assortativity_df": assortativity_df,
-        "figures": [
-            fig1,
-            fig2,
-        ],  # Return the figure objects in case further customization is needed
     }
 
 
 def k_core_analyzis(G, output_dir="."):
+    """K-core analyzis"""
     # Compute the core number for each node
     core_numbers = nx.core_number(G)
 
@@ -1734,16 +1759,18 @@ def run_nutritional_network_analysis(
     similarity_threshold=0.80,
     show_plot=False,
     weighted=False,
-    key_nutrients=default_nutrients,
+    nutrients=None,
 ):
     """Main function to run the complete nutritional network analysis."""
+    if nutrients is None:
+        nutrients = default_nutrients
+
     # Initialize data
     files, graph_data = initialize_data(
         output_dir, dataset, similarity_threshold, weighted
     )
 
     G = graph_data["graph"]
-
 
     filename = f'{output_dir}/graph_{similarity_threshold}{"_weighted" if weighted else ""}.gexf'
 
@@ -1789,13 +1816,19 @@ def run_nutritional_network_analysis(
 
     pagerank(G, output_dir=output_dir)
 
-    # Analyze network assortativity
-    assortativity_results = analyze_nutritional_assortativity(
-        graph_data=graph_data,
-        communities=louvain_comms,
-        visualize=True,
+    assortativity_results = load_or_calculate(
+        files["assortativity"],
+        analyze_network_assortativity,
+        calculate_args=[graph_data],
+        calculate_kwargs={"attribute_names": nutrients},
+        description="Assortativity results",
     )
 
+    plot_assortativity(
+        assortativity_results,
+        show_plot=show_plot,
+        output_dir=output_dir,
+    )
 
     return {
         "graph": G,
@@ -2064,7 +2097,7 @@ if __name__ == "__main__":
         dataset=DATASET,
         similarity_threshold=SIMILARITY_THRESHOLD,
         show_plot=SHOW_PLOT,
-        key_nutrients=key_nutrients,
+        nutrients=key_nutrients,
     )
 
     print_task_header(9, "Repeat 3-8 with weighted graph")
@@ -2075,5 +2108,5 @@ if __name__ == "__main__":
         similarity_threshold=SIMILARITY_THRESHOLD,
         show_plot=SHOW_PLOT,
         weighted=True,
-        key_nutrients=key_nutrients,
+        nutrients=key_nutrients,
     )
