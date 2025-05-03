@@ -560,7 +560,7 @@ def visualize_community_differences(
         plt.close()
 
     # 2. HEATMAP: Show relative nutrient composition
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(14, 10))
 
     # Prepare data for heatmap
     heatmap_data = plot_data[available_nutrients].copy()
@@ -939,6 +939,9 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, output_dir="."
 
 def plot_communities(G, communities, title, output_dir=".", show_plot=True):
     """Plot communities"""
+    filename = f"{output_dir}/communities.png"
+    if os.path.isfile(filename):
+        return
     plt.figure(figsize=(12, 8))
 
     # Map nodes to their community
