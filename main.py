@@ -236,24 +236,7 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
     food_ids = food_nutrients["FOODID"].values
     food_names = food_nutrients["FOODNAME"].values
 
-    # Select only nutrient columns (excluding metadata columns)
-    nutrient_cols = [
-        col
-        for col in food_nutrients.columns
-        if col
-        not in [
-            "FOODID",
-            "FOODNAME",
-            "FOODTYPE",
-            "PROCESS",
-            "EDPORT",
-            "IGCLASS",
-            "IGCLASSP",
-            "FUCLASS",
-            "FUCLASSP",
-            "FAFRE",  # Total fatty acids, reduntant with other fatty acids
-        ]
-    ]
+    nutrient_cols = key_nutrients
 
     # Define nutrient groups and their weights
     nutrient_groups = {
@@ -280,10 +263,6 @@ def create_nutritional_network(data_dir=".", similarity_threshold=0.85, weighted
         "vitamins": {
             "columns": [col for col in nutrient_cols if col in vitamins],
             "weight": 0.08,  # 8% weight
-        },
-        "amino_acids": {
-            "columns": [col for col in nutrient_cols if col in amino_acids],
-            "weight": 0.02,  # 2% weight
         },
     }
 
@@ -2133,144 +2112,249 @@ def run_nutritional_network_analysis(
     }
 
 
-# Key nutritional attributes to analyze
-key_nutrients = [
-    "ALC",
-    "CA",
-    "CAROTENS",
-    "CHOAVL",
-    "CHOLE",
-    "ENERC",
-    "F18D2CN6",
-    "F18D3N3",
-    "F20D5N3",
-    "F22D6N3",
-    "FAFRE",
-    "FAMCIS",
-    "FAPU",
-    "FAPUN3",
-    "FAPUN6",
-    "FASAT",
-    "FAT",
-    "FATRN",
-    "FE",
-    "FIBC",
-    "FIBINS",
-    "FOL",
-    "FRUS",
-    "GALS",
-    "GLUS",
-    "ID",
-    "K",
-    "LACS",
-    "MALS",
-    "MG",
-    "NACL",
-    "NIA",
-    "NIAEQ",
-    "OA",
-    "P",
-    "PROT",
-    "PSACNCS",
-    "RIBF",
-    "SE",
-    "STARCH",
-    "STERT",
-    "SUCS",
-    "SUGAR",
-    "SUGOH",
-    "THIA",
-    "TRP",
-    "VITA",
-    "VITB12",
-    "VITC",
-    "VITD",
-    "VITE",
-    "VITK",
-    "VITPYRID",
-    "ZN",
-]
+if 0:
+    # Key nutritional attributes to analyze
+    key_nutrients = [
+        "ALC",
+        "CA",
+        "CAROTENS",
+        "CHOAVL",
+        "CHOLE",
+        "ENERC",
+        "F18D2CN6",
+        "F18D3N3",
+        "F20D5N3",
+        "F22D6N3",
+        "FAFRE",
+        "FAMCIS",
+        "FAPU",
+        "FAPUN3",
+        "FAPUN6",
+        "FASAT",
+        "FAT",
+        "FATRN",
+        "FE",
+        "FIBC",
+        "FIBINS",
+        "FOL",
+        "FRUS",
+        "GALS",
+        "GLUS",
+        "ID",
+        "K",
+        "LACS",
+        "MALS",
+        "MG",
+        "NACL",
+        "NIA",
+        "NIAEQ",
+        "OA",
+        "P",
+        "PROT",
+        "PSACNCS",
+        "RIBF",
+        "SE",
+        "STARCH",
+        "STERT",
+        "SUCS",
+        "SUGAR",
+        "SUGOH",
+        "THIA",
+        "TRP",
+        "VITA",
+        "VITB12",
+        "VITC",
+        "VITD",
+        "VITE",
+        "VITK",
+        "VITPYRID",
+        "ZN",
+    ]
 
-# Macronutrients
-macronutrients = [
-    "ENERC",  # energy, calculated (kJ)
-    "FAT",  # fat, total (g)
-    "CHOAVL",  # carbohydrate, available (g)
-    "PROT",  # protein, total (g)
-    "ALC",  # alcohol (g)
-    "FIBC",  # fibre, total (g)
-    "FIBINS",  # fibre, insoluble (g)
-    "PSACNCS",  # polysaccharide, water-soluble non-cellulose (g)
-    "STARCH",  # starch, total (g)
-    "SUGAR",  # sugars, total (g)
-]
+    # Macronutrients
+    macronutrients = [
+        "ENERC",  # energy, calculated (kJ)
+        "FAT",  # fat, total (g)
+        "CHOAVL",  # carbohydrate, available (g)
+        "PROT",  # protein, total (g)
+        "ALC",  # alcohol (g)
+        "FIBC",  # fibre, total (g)
+        "FIBINS",  # fibre, insoluble (g)
+        "PSACNCS",  # polysaccharide, water-soluble non-cellulose (g)
+        "STARCH",  # starch, total (g)
+        "SUGAR",  # sugars, total (g)
+    ]
 
-# Lipid Profile
-lipid_profile = [
-    "FASAT",  # fatty acids, total saturated (g)
-    "FAMCIS",  # fatty acids, total monounsaturated cis (g)
-    "FAPU",  # fatty acids, total polyunsaturated (g)
-    "FATRN",  # fatty acids, total trans (g)
-    "FAPUN3",  # fatty acids, total n-3 polyunsaturated (g)
-    "FAPUN6",  # fatty acids, total n-6 polyunsaturated (g)
-    "F18D2CN6",  # fatty acid 18:2 cis, cis n-6 (linoleic acid)
-    "F18D3N3",  # fatty acid 18:3 n-3 (alpha-linolenic acid)
-    "F20D5N3",  # fatty acid 20:5 n-3 (EPA)
-    "F22D6N3",  # fatty acid 22:6 n-3 (DHA)
-    "CHOLE",  # cholesterol (mg)
-    "STERT",  # sterols, total (mg)
-]
+    # Lipid Profile
+    lipid_profile = [
+        "FASAT",  # fatty acids, total saturated (g)
+        "FAMCIS",  # fatty acids, total monounsaturated cis (g)
+        "FAPU",  # fatty acids, total polyunsaturated (g)
+        "FATRN",  # fatty acids, total trans (g)
+        "FAPUN3",  # fatty acids, total n-3 polyunsaturated (g)
+        "FAPUN6",  # fatty acids, total n-6 polyunsaturated (g)
+        "F18D2CN6",  # fatty acid 18:2 cis, cis n-6 (linoleic acid)
+        "F18D3N3",  # fatty acid 18:3 n-3 (alpha-linolenic acid)
+        "F20D5N3",  # fatty acid 20:5 n-3 (EPA)
+        "F22D6N3",  # fatty acid 22:6 n-3 (DHA)
+        "CHOLE",  # cholesterol (mg)
+        "STERT",  # sterols, total (mg)
+    ]
 
-# Sugar Profile
-sugar_profile = [
-    "FRUS",  # fructose (g)
-    "GALS",  # galactose (g)
-    "GLUS",  # glucose (g)
-    "LACS",  # lactose (g)
-    "MALS",  # maltose (g)
-    "SUCS",  # sucrose (g)
-    "SUGOH",  # sugar alcohols (g)
-    "OA",  # organic acids, total (g)
-]
+    # Sugar Profile
+    sugar_profile = [
+        "FRUS",  # fructose (g)
+        "GALS",  # galactose (g)
+        "GLUS",  # glucose (g)
+        "LACS",  # lactose (g)
+        "MALS",  # maltose (g)
+        "SUCS",  # sucrose (g)
+        "SUGOH",  # sugar alcohols (g)
+        "OA",  # organic acids, total (g)
+    ]
 
-# Major Minerals
-major_minerals = [
-    "CA",  # calcium (mg)
-    "K",  # potassium (mg)
-    "MG",  # magnesium (mg)
-    "NACL",  # sodium/salt (mg)
-    "P",  # phosphorus (mg)
-]
+    # Major Minerals
+    major_minerals = [
+        "CA",  # calcium (mg)
+        "K",  # potassium (mg)
+        "MG",  # magnesium (mg)
+        "NACL",  # sodium/salt (mg)
+        "P",  # phosphorus (mg)
+    ]
 
-# Minor Minerals
-minor_minerals = [
-    "FE",  # iron (mg)
-    "ID",  # iodine (ug)
-    "SE",  # selenium (ug)
-    "ZN",  # zinc (mg)
-]
+    # Minor Minerals
+    minor_minerals = [
+        "FE",  # iron (mg)
+        "ID",  # iodine (ug)
+        "SE",  # selenium (ug)
+        "ZN",  # zinc (mg)
+    ]
 
-# Vitamins
-vitamins = [
-    "VITA",  # Vitamin A (RAE)
-    "THIA",  # Thiamine (B1)
-    "RIBF",  # Riboflavin (B2)
-    "NIA",  # Niacin
-    "NIAEQ",  # Niacin equivalent (NE)
-    "VITPYRID",  # Pyridoxine (B6)
-    "FOL",  # Folate
-    "VITB12",  # Vitamin B12
-    "VITC",  # Vitamin C
-    "VITD",  # Vitamin D
-    "VITE",  # Vitamin E (alpha-tocopherol)
-    "VITK",  # Vitamin K
-    "CAROTENS",  # Carotenoids
-]
+    # Vitamins
+    vitamins = [
+        "VITA",  # Vitamin A (RAE)
+        "THIA",  # Thiamine (B1)
+        "RIBF",  # Riboflavin (B2)
+        "NIA",  # Niacin
+        "NIAEQ",  # Niacin equivalent (NE)
+        "VITPYRID",  # Pyridoxine (B6)
+        "FOL",  # Folate
+        "VITB12",  # Vitamin B12
+        "VITC",  # Vitamin C
+        "VITD",  # Vitamin D
+        "VITE",  # Vitamin E (alpha-tocopherol)
+        "VITK",  # Vitamin K
+        "CAROTENS",  # Carotenoids
+    ]
 
-# Amino acids
-amino_acids = [
-    "TRP",  # Tryptophan
-]
+    # Amino acids
+    amino_acids = [
+        "TRP",  # Tryptophan
+    ]
+
+elif 1:
+    # Macronutrients
+    key_nutrients = [
+        "ENERC",  # energy, calculated (kJ)
+        "FAT",  # fat, total (g)
+        "CHOAVL",  # carbohydrate, available (g)
+        "PROT",  # protein, total (g)
+        "ALC",  # alcohol (g)
+        "FIBC",  # fibre, total (g)
+        "STARCH",  # starch, total (g)
+        "SUGAR",  # sugars, total (g)
+        "FASAT",  # fatty acids, total saturated (g)
+        "FAPU",  # fatty acids, total polyunsaturated (g)
+        "FATRN",  # fatty acids, total trans (g)
+        "F20D5N3",  # fatty acid 20:5 n-3 (EPA)
+        "F22D6N3",  # fatty acid 22:6 n-3 (DHA)
+        "CHOLE",  # cholesterol (mg)
+        "STERT",  # sterols, total (mg)
+        "LACS",  # lactose (g)
+        "SUGOH",  # sugar alcohols (g)
+        "CA",  # calcium (mg)
+        "K",  # potassium (mg)
+        "MG",  # magnesium (mg)
+        "NACL",  # sodium/salt (mg)
+        "P",  # phosphorus (mg)
+        "FE",  # iron (mg)
+        "ID",  # iodine (ug)
+        "VITA",  # Vitamin A (RAE)
+        "THIA",  # Thiamine (B1)
+        "FOL",  # Folate
+        "VITB12",  # Vitamin B12
+        "VITC",  # Vitamin C
+        "VITK",  # Vitamin K
+        "CAROTENS",  # Carotenoids
+    ]
+    # Macronutrients
+    macronutrients = [
+        "ENERC",  # energy, calculated (kJ)
+        "FAT",  # fat, total (g)
+        "CHOAVL",  # carbohydrate, available (g)
+        "PROT",  # protein, total (g)
+        "ALC",  # alcohol (g)
+        "FIBC",  # fibre, total (g)
+        "STARCH",  # starch, total (g)
+        "SUGAR",  # sugars, total (g)
+    ]
+
+    # Lipid Profile
+    lipid_profile = [
+        "FASAT",  # fatty acids, total saturated (g)
+        "FAPU",  # fatty acids, total polyunsaturated (g)
+        "FATRN",  # fatty acids, total trans (g)
+        "F20D5N3",  # fatty acid 20:5 n-3 (EPA)
+        "F22D6N3",  # fatty acid 22:6 n-3 (DHA)
+        "CHOLE",  # cholesterol (mg)
+        "STERT",  # sterols, total (mg)
+    ]
+
+    # Sugar Profile
+    sugar_profile = [
+        "LACS",  # lactose (g)
+        "SUGOH",  # sugar alcohols (g)
+    ]
+
+    # Major Minerals
+    major_minerals = [
+        "CA",  # calcium (mg)
+        "K",  # potassium (mg)
+        "MG",  # magnesium (mg)
+        "NACL",  # sodium/salt (mg)
+        "P",  # phosphorus (mg)
+    ]
+
+    # Minor Minerals
+    minor_minerals = [
+        "FE",  # iron (mg)
+        "ID",  # iodine (ug)
+    ]
+
+    # Vitamins
+    vitamins = [
+        "VITA",  # Vitamin A (RAE)
+        "THIA",  # Thiamine (B1)
+        "FOL",  # Folate
+        "VITB12",  # Vitamin B12
+        "VITC",  # Vitamin C
+        "VITK",  # Vitamin K
+        "CAROTENS",  # Carotenoids
+    ]
+
+else:
+    key_nutrients = [
+        "ENERC",  # energy, calculated (kJ)
+        "FAT",  # fat, total (g)
+        "PROT",  # protein, total (g)
+        "ALC",  # alcohol (g)
+        "FIBC",  # fibre, total (g)
+        "SUGAR",  # sugars, total (g)
+        "FASAT",  # fatty acids, total saturated (g)
+        "NACL",  # sodium/salt (mg)
+        "CHOAVL",  # carbohydrate, available (g)
+    ]
+
 
 if __name__ == "__main__":
     # Define constants
