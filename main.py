@@ -1255,7 +1255,11 @@ def analyze_top_food_characteristics(
 
 
 def initialize_data(
-    data_dir=".", dataset="Fineli_Rel20", similarity_threshold=0.80, weighted=False
+    data_dir=".",
+    dataset="Fineli_Rel20",
+    similarity_threshold=0.80,
+    weighted=False,
+    k=20,
 ):
     """Initialize data directory and create file paths for storing data."""
     os.makedirs(data_dir, exist_ok=True)
@@ -1276,7 +1280,7 @@ def initialize_data(
         calculate_kwargs={
             "similarity_threshold": similarity_threshold,
             "weighted": weighted,
-            "k": 50,
+            "k": k,
             "use_topk": True,
         },
         description="graph data",
@@ -1288,7 +1292,7 @@ def initialize_data(
 def analyze_centrality(G, files, show_plot=False, output_dir=".", weighted=True):
     """Analyze and visualize centrality measures."""
     print_task_header(3, "Visualize and plot the degree distribution")
-    approximate = True
+    approximate = False
 
     centrality_measures = load_or_calculate(
         files["centrality"],
@@ -1366,18 +1370,9 @@ def analyze_clustering(G, files, show_plot=False, output_dir=".", weighted=True)
     return node_clustering_coefficients
 
 
-def detect_communities(G, files, show_plot=False, output_dir="."):
+def detect_communities(G, files):
     """Detect communities using Girvan-Newman and Louvain algorithms."""
     print_task_header(6, "Detect communities within the nutritional network")
-
-    # Load or calculate Girvan-Newman communities
-    gn_communities = load_or_calculate(
-        files["gn_communities"],
-        girvan_newman,
-        calculate_args=[G],
-        description="GN communities",
-        post_process_func=lambda gen: process_girvan_newman(gen, max_communities=500),
-    )
 
     # Load or calculate Louvain communities
     louvain_comms = load_or_calculate(
@@ -1388,29 +1383,7 @@ def detect_communities(G, files, show_plot=False, output_dir="."):
         description="Louvain communities",
     )
 
-    # Visualize communities
-    plot_communities(
-        G, gn_communities, "Communities detected by Girvan-Newman algorithm"
-    )
-    plot_communities(
-        G,
-        louvain_comms,
-        "Communities detected by Louvain algorithm",
-        output_dir,
-        show_plot=show_plot,
-    )
-
-    # Display community statistics
-    print_result(
-        label="Girvan-Newman Communities Statistics:",
-        value=calculate_community_stats(G, gn_communities),
-        indent=6,
-    )
-
-    print("Louvain Communities Statistics:")
-    print(calculate_community_stats(G, louvain_comms))
-
-    return gn_communities, louvain_comms
+    return louvain_comms
 
 
 def analyze_nutritional_composition(
@@ -1906,6 +1879,7 @@ def run_nutritional_network_analysis(
     show_plot=False,
     weighted=False,
     nutrients=None,
+    k=20,
 ):
     """Main function to run the complete nutritional network analysis."""
     if nutrients is None:
@@ -1913,7 +1887,7 @@ def run_nutritional_network_analysis(
 
     # Initialize data
     files, graph_data = initialize_data(
-        output_dir, dataset, similarity_threshold, weighted
+        output_dir, dataset, similarity_threshold, weighted, k
     )
 
     G = graph_data["graph"]
@@ -1938,7 +1912,7 @@ def run_nutritional_network_analysis(
         print("File found, not saving")
 
     visualize_network(
-        graph_data, max_nodes=2000, output_dir=output_dir, show_plot=show_plot
+        graph_data, max_nodes=300, output_dir=output_dir, show_plot=show_plot
     )
 
     # Analyze centrality
@@ -1948,7 +1922,7 @@ def run_nutritional_network_analysis(
     analyze_clustering(G, files, show_plot, output_dir, weighted=weighted)
 
     # Detect communities
-    _, louvain_comms = detect_communities(G, files, show_plot, output_dir)
+    louvain_comms = detect_communities(G, files)
 
     # Analyze nutritional composition
     community_nutrition, component_names = analyze_nutritional_composition(
@@ -2426,11 +2400,12 @@ else:
 
 if __name__ == "__main__":
     # Define constants
-    SHOW_PLOT = True
-    SIMILARITY_THRESHOLD = 0.8
+    SHOW_PLOT = False
+    SIMILARITY_THRESHOLD = 0.5
     OUTPUT_DIR = f"tmp_{SIMILARITY_THRESHOLD}"
     OUTPUT_DIR_WEIGHTED = f"tmp_weighted_{SIMILARITY_THRESHOLD}"
     DATASET = "Fineli_Rel20"
+    K = 15
 
     # Run analysis with default parameters
     network_analysis = run_nutritional_network_analysis(
@@ -2439,6 +2414,7 @@ if __name__ == "__main__":
         similarity_threshold=SIMILARITY_THRESHOLD,
         show_plot=SHOW_PLOT,
         nutrients=key_nutrients,
+        k=K,
     )
 
     print_task_header(9, "Repeat 3-8 with weighted graph")
@@ -2450,4 +2426,5 @@ if __name__ == "__main__":
         show_plot=SHOW_PLOT,
         weighted=True,
         nutrients=key_nutrients,
+        k=K,
     )
