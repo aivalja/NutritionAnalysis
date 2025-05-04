@@ -18,8 +18,27 @@ from tqdm import tqdm
 from adjustText import adjust_text
 
 
-SHOW_PLOT = False
 default_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC", "VITC"]
+
+
+class Tee:
+    """For redirecting print to file"""
+
+    def __init__(self, filename, mode="a"):
+        self.terminal = sys.stdout
+        self.file = open(filename, mode)
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.file.write(message)
+        self.file.flush()  # Ensure data is written immediately
+
+    def flush(self):
+        self.terminal.flush()
+        self.file.flush()
+
+    def close(self):
+        self.file.close()
 
 
 def load_component_names(data_dir="."):
@@ -2405,7 +2424,20 @@ if __name__ == "__main__":
     OUTPUT_DIR = f"tmp_{SIMILARITY_THRESHOLD}"
     OUTPUT_DIR_WEIGHTED = f"tmp_weighted_{SIMILARITY_THRESHOLD}"
     DATASET = "Fineli_Rel20"
-    K = 15
+    K = 20
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_filename = f"output_log_{timestamp}.txt"
+
+    sys.stdout = Tee(log_filename, "w")
+
+    print_task_header(0, "Program parameters:")
+    print_result("Similarity threshord", SIMILARITY_THRESHOLD)
+    print_result("Top K nodes", K)
+    print_result("Output dir", OUTPUT_DIR)
+    print_result("Output dir (weighted)", OUTPUT_DIR_WEIGHTED)
+    print_result("Log file", log_filename)
+    print("")  # For prettier output
 
     # Run analysis with default parameters
     network_analysis = run_nutritional_network_analysis(
@@ -2428,3 +2460,5 @@ if __name__ == "__main__":
         nutrients=key_nutrients,
         k=K,
     )
+
+    sys.stdout.close()
