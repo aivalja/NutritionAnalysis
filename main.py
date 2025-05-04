@@ -43,6 +43,32 @@ def load_component_names(data_dir="."):
     return comp_name_map
 
 
+def truncate_text(text, max_length, split_char=None, indicator="..."):
+    """Truncate text to max_length and add indicator if truncated.
+
+    Args:
+        text (str): The input text to truncate.
+        max_length (int): The maximum length of the output text.
+        indicator (str): The string to append if text is truncated (default: "...").
+        split_char (str, optional): Character to split the text at before truncation limit.
+
+    Returns:
+        str: Truncated text, possibly with an indicator appended.
+    """
+    if len(text) <= max_length:
+        return text
+
+    if split_char:
+        # Look for the split character within the max_length limit
+        split_index = text.find(split_char, 0, max_length - len(indicator))
+        if split_index != -1:
+            return text[:split_index].strip()
+
+    # If no split_char is provided or not found, truncate normally
+    truncate_at = max_length - len(indicator)
+    return text[:truncate_at] + indicator
+
+
 def load_or_calculate(
     file_path: str,
     calculate_func: Callable,
@@ -912,11 +938,17 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, output_dir="."
     return results
 
 
-def plot_communities(G, communities, title, output_dir=".", show_plot=True):
-    """Plot communities"""
+def plot_communities(
+    G,
+    communities,
+    title,
+    output_dir=".",
+    food_items=None,
+    max_labels_per_community=2,
+    show_plot=True,
+):
+    """Plot communities with optional food labels for specific nodes, preventing label overlap"""
     filename = f"{output_dir}/communities.png"
-    if os.path.isfile(filename):
-        return
     plt.figure(figsize=(12, 8))
 
     # Convert the set/dictionary to a list before sampling
@@ -953,17 +985,65 @@ def plot_communities(G, communities, title, output_dir=".", show_plot=True):
     # Position nodes using spring layout
     pos = nx.kamada_kawai_layout(G_sampled)
 
+    # Create food_id to food_name mapping from the dictionary structure
+    food_mapping = {}
+    if food_items:
+        for index in food_items:
+            for food in food_items[index]:
+                food_mapping[food["food_id"]] = food["food_name"]
+
+    # Create a dictionary of labels, limiting the number per community
+    node_labels = {}
+    if food_mapping:
+        # Group sampled nodes by community
+        community_nodes = {}
+        for node in G_sampled.nodes():
+            if node in community_map:
+                comm_idx = community_map[node]
+                if comm_idx not in community_nodes:
+                    community_nodes[comm_idx] = []
+                community_nodes[comm_idx].append(node)
+
+        # For each community, add labels for up to max_labels_per_community food nodes
+        for comm_idx, nodes in community_nodes.items():
+            label_count = 0
+            for node in nodes:
+                if node in food_mapping and label_count < max_labels_per_community:
+                    node_labels[node] = truncate_text(
+                        food_mapping[node], 15, split_char=","
+                    )
+                    label_count += 1
+
     # Draw the graph
     nx.draw_networkx(
         G_sampled,
         pos=pos,
         node_color=node_colors,
-        with_labels=False,
-        node_size=20,  # Much smaller nodes
+        with_labels=False,  # Don't show all labels
+        node_size=20,
         edge_color="gray",
-        alpha=0.8,  # More transparency
-        width=0.2,  # Thinner edges
+        alpha=0.8,
+        width=0.2,
     )
+
+    # Create text objects for labels with adjust_text instead of draw_networkx_labels
+    texts = []
+    for node, label in node_labels.items():
+        x, y = pos[node]
+        texts.append(
+            plt.text(
+                x, y, label, fontsize=8, fontweight="bold", ha="center", va="center"
+            )
+        )
+
+    # Adjust text positions to avoid overlaps
+    if texts:
+        adjust_text(
+            texts,
+            arrowprops=dict(arrowstyle="-", color="gray", lw=0.5),
+            expand_points=(1.5, 1.5),
+            force_points=(0.5, 0.5),
+        )
 
     plt.title(title)
     plt.axis("off")
@@ -1876,6 +1956,29 @@ def run_nutritional_network_analysis(
     community_top_foods, top_food_analysis = analyze_top_similar_foods(
         graph_data, louvain_comms, component_names
     )
+
+    # Visualize communities
+    # plot_communities(
+    #     G, gn_communities, "Communities detected by Girvan-Newman algorithm"
+    # )
+    plot_communities(
+        G,
+        louvain_comms,
+        "Communities detected by Louvain algorithm",
+        output_dir,
+        show_plot=show_plot,
+        food_items=community_top_foods,
+    )
+
+    # Display community statistics
+    # print_result(
+    #     label="Girvan-Newman Communities Statistics:",
+    #     value=calculate_community_stats(G, gn_communities),
+    #     indent=6,
+    # )
+
+    # print("Louvain Communities Statistics:")
+    # print(calculate_community_stats(G, louvain_comms))
 
     # Display results
     display_results(
