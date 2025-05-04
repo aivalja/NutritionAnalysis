@@ -10,6 +10,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import powerlaw
+import math
 from networkx.algorithms.community.centrality import girvan_newman
 from networkx.algorithms.community import louvain_communities
 import seaborn as sns
@@ -265,7 +266,7 @@ def create_nutritional_network(
         },
         "vitamins": {
             "columns": [col for col in nutrient_cols if col in vitamins],
-            "weight": 0.08,  # 8% weight
+            "weight": 0.10,  # 10% weight
         },
     }
 
@@ -323,6 +324,20 @@ def create_nutritional_network(
         for col in unprocessed:
             # Use the pre-scaled values and apply default weight
             scaled_nutrients[col] = scaled_nutrients_base[col] * default_weight
+
+    print("\nNutrient Groups and Weights:")
+    print("-" * 40)
+    for group_name, group_info in nutrient_groups.items():
+        columns = group_info["columns"]
+        group_weight = group_info["weight"]
+        if columns:  # Only print groups that have nutrients
+            individual_weight = group_weight / len(columns) if columns else 0
+            print(
+                f"Group: {group_name.capitalize()} (Total Weight: {group_weight:.2%})"
+            )
+            for col in columns:
+                print(f"  - {col}: {individual_weight:.3%}")
+            print("-" * 40)
 
     # Calculate cosine similarity on all weighted nutrients at once
     similarity_matrix = cosine_similarity(scaled_nutrients)
@@ -945,8 +960,7 @@ def calculate_community_stats(G, communities):
     """Calculate community stats"""
     stats = []
 
-    for i, comm in enumerate(communities):
-        print(i)
+    for i, comm in tqdm(enumerate(communities)):
         # Create subgraph for this community
         subgraph = G.subgraph(comm)
 
@@ -1799,18 +1813,22 @@ def run_nutritional_network_analysis(
     )
 
     G = graph_data["graph"]
+    food_mapping = graph_data["food_mapping"]  # This maps food IDs to food names
+
+    # Create a new graph with food names as node IDs
+    G_renamed = nx.relabel_nodes(G, food_mapping)
 
     filename = f'{output_dir}/graph_{similarity_threshold}{"_weighted" if weighted else ""}.gexf'
 
     if not os.path.isfile(filename):
-        nx.write_gexf(G, filename)
+        nx.write_gexf(G_renamed, filename)
         print("Saved gexf to", filename)
     else:
         print("File found, not saving")
 
     filename = f'{output_dir}/graph_{similarity_threshold}{"_weighted" if weighted else ""}.graphml'
     if not os.path.isfile(filename):
-        nx.write_graphml(G, filename)
+        nx.write_graphml(G_renamed, filename)
         print("Saved graphml to", filename)
     else:
         print("File found, not saving")
