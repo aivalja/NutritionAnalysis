@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 import powerlaw
 import math
+import sys
+import datetime
 from networkx.algorithms.community.centrality import girvan_newman
 from networkx.algorithms.community import louvain_communities
 import seaborn as sns
@@ -691,11 +693,11 @@ def visualize_network(graph_data, max_nodes=100, output_dir=".", show_plot=True)
 
     # If the graph is very large, take a subset for visualization
     if G.number_of_nodes() > max_nodes:
-        # Get the nodes with the most connections
-        sorted_nodes = sorted(G.degree, key=lambda x: x[1], reverse=True)
-        top_nodes = [n for n, d in sorted_nodes[:max_nodes]]
+        # Get a random subset of nodes
+        all_nodes = list(G.nodes())
+        top_nodes = random.sample(all_nodes, min(max_nodes, len(all_nodes)))
         G_viz = G.subgraph(top_nodes)
-        print(f"Visualizing a subset of {len(top_nodes)} most connected nodes")
+        print(f"Visualizing a random subset of {len(top_nodes)} nodes")
     else:
         G_viz = G
 
@@ -719,7 +721,6 @@ def visualize_network(graph_data, max_nodes=100, output_dir=".", show_plot=True)
     plt.tight_layout()
 
     # Save the visualization
-    filename = f"{output_dir}/network.png"
     plt.savefig(filename, bbox_inches="tight", dpi=300)
 
     # Show plot
