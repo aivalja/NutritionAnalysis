@@ -919,6 +919,27 @@ def plot_communities(G, communities, title, output_dir=".", show_plot=True):
         return
     plt.figure(figsize=(12, 8))
 
+    # Convert the set/dictionary to a list before sampling
+    samples = []
+    for comm in communities:
+        comm_list = list(comm)  # Convert to list
+
+        # Get degrees of nodes in this community
+        node_degrees = [(node, G.degree(node)) for node in comm_list]
+
+        # Sort by degree (highest first)
+        sorted_nodes = [
+            node
+            for node, degree in sorted(node_degrees, key=lambda x: x[1], reverse=True)
+        ]
+
+        # Take 10% of nodes from each community, minimum 5 nodes if available
+        num_to_select = min(
+            len(comm_list), max(5, int(math.ceil(len(comm_list) * 0.20)))
+        )
+        samples.extend(sorted_nodes[:num_to_select])
+    G_sampled = G.subgraph(samples)
+
     # Map nodes to their community
     community_map = {}
     for i, comm in enumerate(communities):
@@ -927,21 +948,21 @@ def plot_communities(G, communities, title, output_dir=".", show_plot=True):
 
     # Colors for each community
     colors = plt.cm.rainbow(np.linspace(0, 1, len(communities)))
-    node_colors = [colors[community_map[node]] for node in G.nodes()]
+    node_colors = [colors[community_map[node]] for node in G_sampled.nodes()]
 
     # Position nodes using spring layout
-    pos = nx.spring_layout(G, seed=42)
+    pos = nx.kamada_kawai_layout(G_sampled)
 
     # Draw the graph
     nx.draw_networkx(
-        G,
+        G_sampled,
         pos=pos,
         node_color=node_colors,
-        with_labels=True,
-        node_size=100,
-        font_size=8,
+        with_labels=False,
+        node_size=20,  # Much smaller nodes
         edge_color="gray",
-        alpha=0.8,
+        alpha=0.8,  # More transparency
+        width=0.2,  # Thinner edges
     )
 
     plt.title(title)
