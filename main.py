@@ -29,18 +29,40 @@ class Tee:
     def __init__(self, filename, mode="a"):
         self.terminal = sys.stdout
         self.file = open(filename, mode)
+        self.filename = filename
+        self.mode = mode
+        self._closed = False
 
     def write(self, message):
         self.terminal.write(message)
-        self.file.write(message)
-        self.file.flush()  # Ensure data is written immediately
+        if not self._closed and not self.file.closed:
+            try:
+                self.file.write(message)
+                self.file.flush()  # Ensure data is written immediately
+            except ValueError:
+                # If file is closed, try reopening it
+                try:
+                    self.file = open(self.filename, self.mode)
+                    self.file.write(message)
+                    self.file.flush()
+                except Exception:
+                    pass  # Continue without file writing if reopening fails
 
     def flush(self):
         self.terminal.flush()
-        self.file.flush()
+        if not self._closed and not self.file.closed:
+            try:
+                self.file.flush()
+            except ValueError:
+                pass  # Skip flushing if file is closed
 
     def close(self):
-        self.file.close()
+        if not self._closed and not self.file.closed:
+            self.file.close()
+        self._closed = True
+
+    def __del__(self):
+        self.close()
 
 
 def load_component_names(data_dir="."):
@@ -1785,8 +1807,8 @@ def plot_assortativity(results, show_plot=False, output_dir="."):
     }
 
 
-def k_core_analyzis(G, output_dir="."):
-    """K-core analyzis"""
+def k_core_analysis(G, output_dir="."):
+    """K-core analysis"""
     # Compute the core number for each node
     core_numbers = nx.core_number(G)
 
@@ -1805,6 +1827,7 @@ def k_core_analyzis(G, output_dir="."):
     plt.title("Distribution of Core Numbers")
     filename = f"{output_dir}/core_distribution.png"
     plt.savefig(filename, bbox_inches="tight", dpi=300)
+    plt.close()
 
     # Select representative k values (e.g., min, 25%, 50%, 75%, max)
     k_values = [
@@ -1827,10 +1850,19 @@ def k_core_analyzis(G, output_dir="."):
         if len(k_core.nodes()) < 5000:
             plt.figure(figsize=(8, 8))
             pos = nx.spring_layout(k_core, seed=42)
-            nx.draw(k_core, pos, node_size=30, with_labels=False)
+            nx.draw(
+                k_core,
+                pos,
+                with_labels=False,
+                node_size=20,
+                edge_color="gray",
+                alpha=0.8,
+                width=0.2,
+            )
             plt.title(f"k-core (k={k})")
             filename = f"{output_dir}/k_core_{k}.png"
             plt.savefig(filename, bbox_inches="tight", dpi=300)
+            plt.close()
 
     # Group nodes by their core number
     nodes_by_core = {}
@@ -1890,6 +1922,7 @@ def k_core_analyzis(G, output_dir="."):
     plt.tight_layout()
     filename = f"{output_dir}/core_properties.png"
     plt.savefig(filename, bbox_inches="tight", dpi=300)
+    plt.close()
 
 
 def run_nutritional_network_analysis(
@@ -1984,6 +2017,8 @@ def run_nutritional_network_analysis(
 
     pagerank(G, output_dir=output_dir, show_plot=show_plot)
 
+    print_task_header(12, "Analyze the assortativity of the network")
+
     assortativity_results = load_or_calculate(
         files["assortativity"],
         analyze_network_assortativity,
@@ -1998,9 +2033,13 @@ def run_nutritional_network_analysis(
         output_dir=output_dir,
     )
 
-    hits_analyzis(graph_data, output_dir=output_dir, show_plot=show_plot)
+    print_task_header(13, "K-core analysis")
 
-    k_core_analyzis(G, output_dir=output_dir)
+    k_core_analysis(G, output_dir=output_dir)
+
+    print_task_header(14, "HITS algorithm")
+
+    hits_analysis(graph_data, output_dir=output_dir, show_plot=show_plot)
 
     return {
         "graph": G,
@@ -2011,8 +2050,8 @@ def run_nutritional_network_analysis(
     }
 
 
-def hits_analyzis(graph_data, output_dir=".", show_plot=True):
-    """HITS analyzis"""
+def hits_analysis(graph_data, output_dir=".", show_plot=True):
+    """HITS analysis"""
     G = graph_data["graph"]
     food_mapping = graph_data["food_mapping"]
 
