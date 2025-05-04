@@ -470,7 +470,7 @@ def analyze_community_nutrition(graph_data, communities, nutrients=None):
         # Add community info
         avg_nutrients["community_id"] = i
         avg_nutrients["size"] = len(community)
-        avg_nutrients["food_examples"] = ", ".join(
+        avg_nutrients["food_examples"] = "\n ".join(
             community_foods["FOODNAME"].head(3).tolist()
         )
 
@@ -589,7 +589,7 @@ def visualize_community_differences(
     plt.title("Relative Nutrient Composition by Community (Normalized to Max Value)")
     plt.tight_layout()
     filename = f"{output_dir}/relative_nutrient_heatmap.png"
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
 
     if show_plot:
         plt.show()
@@ -648,7 +648,7 @@ def visualize_community_differences(
         plt.title("Nutritional Profile of Food Communities (Normalized)")
 
         filename = f"{output_dir}/nutritional_profile_of_communities.png"
-        plt.savefig(filename, bbox_inches="tight")
+        plt.savefig(filename, bbox_inches="tight", dpi=300)
         if show_plot:
             plt.show()
         else:
@@ -663,6 +663,10 @@ def visualize_network(graph_data, max_nodes=100, output_dir=".", show_plot=True)
         graph_data: Output from create_nutritional_network
         max_nodes: Maximum number of nodes to display for readability
     """
+    filename = f"{output_dir}/network.png"
+    if os.path.isfile(filename):
+        return
+
     G = graph_data["graph"]
     food_mapping = graph_data["food_mapping"]
 
@@ -679,23 +683,17 @@ def visualize_network(graph_data, max_nodes=100, output_dir=".", show_plot=True)
     # Set up the plot
     plt.figure(figsize=(14, 10))
 
-    # Position nodes using force-directed layout
-    pos = nx.spring_layout(G_viz, seed=42)
+    # Position nodes
+    pos = nx.kamada_kawai_layout(G_viz)
 
     # Draw nodes
-    nx.draw_networkx_nodes(G_viz, pos, node_size=100, alpha=0.7)
+    nx.draw_networkx_nodes(G_viz, pos, node_size=50, alpha=0.8)
 
     # Draw edges with weights affecting thickness (use 1 if no weight assigned)
     edge_weights = [
         G_viz.get_edge_data(u, v).get("weight", 1) * 2 for u, v in G_viz.edges()
     ]
-    nx.draw_networkx_edges(G_viz, pos, width=edge_weights, alpha=0.4)
-
-    # Add node labels (food names) with smaller font
-    labels = {node: food_mapping[node] for node in G_viz.nodes()}
-    nx.draw_networkx_labels(
-        G_viz, pos, labels=labels, font_size=8, font_family="sans-serif"
-    )
+    nx.draw_networkx_edges(G_viz, pos, width=edge_weights, alpha=0.4, edge_color="gray")
 
     plt.title("Nutritional Similarity Network of Food Items")
     plt.axis("off")
@@ -703,7 +701,7 @@ def visualize_network(graph_data, max_nodes=100, output_dir=".", show_plot=True)
 
     # Save the visualization
     filename = f"{output_dir}/network.png"
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
 
     # Show plot
     if show_plot:
@@ -780,7 +778,7 @@ def plot_centrality_histograms(
         plt.grid(True, alpha=0.3)
 
         filename = f"{output_dir}/{c_type}_centrality_{network_name.lower().replace(' ', '_')}.png"
-        plt.savefig(filename, bbox_inches="tight")
+        plt.savefig(filename, bbox_inches="tight", dpi=300)
 
         plt.close()
         print_result("Saved histogram", filename, indent=6)
@@ -801,7 +799,7 @@ def plot_centrality_histograms(
 
         plt.tight_layout()
         filename = f"{output_dir}/combined_centrality_{network_name.lower().replace(' ', '_')}.png"
-        plt.savefig(filename, bbox_inches="tight")
+        plt.savefig(filename, bbox_inches="tight", dpi=300)
         if show_plot:
             plt.show()
         else:
@@ -921,7 +919,7 @@ def analyze_centrality_power_law(centrality_dict, show_plot=True, output_dir="."
             plt.legend()
 
             filename = f"{output_dir}/{centrality_type}_powerlaw.png"
-            plt.savefig(filename, bbox_inches="tight")
+            plt.savefig(filename, bbox_inches="tight", dpi=300)
 
             if show_plot:
                 plt.show()
@@ -949,6 +947,9 @@ def plot_communities(
 ):
     """Plot communities with optional food labels for specific nodes, preventing label overlap"""
     filename = f"{output_dir}/communities.png"
+    if os.path.isfile(filename):
+        return
+
     plt.figure(figsize=(12, 8))
 
     # Convert the set/dictionary to a list before sampling
@@ -1010,7 +1011,7 @@ def plot_communities(
             for node in nodes:
                 if node in food_mapping and label_count < max_labels_per_community:
                     node_labels[node] = truncate_text(
-                        food_mapping[node], 15, split_char=","
+                        food_mapping[node], 20, split_char=","
                     )
                     label_count += 1
 
@@ -1040,9 +1041,7 @@ def plot_communities(
     if texts:
         adjust_text(
             texts,
-            arrowprops=dict(arrowstyle="-", color="gray", lw=0.5),
-            expand_points=(1.5, 1.5),
-            force_points=(0.5, 0.5),
+            arrowprops=dict(arrowstyle="-", color="black", lw=0.5),
         )
 
     plt.title(title)
@@ -1050,7 +1049,7 @@ def plot_communities(
     plt.tight_layout()
 
     filename = f"{output_dir}/communities.png"
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
     if show_plot:
         plt.show()
     else:
@@ -1357,7 +1356,7 @@ def analyze_clustering(G, files, show_plot=False, output_dir=".", weighted=True)
     plt.grid(axis="y", linestyle="--")
 
     filename = f"{output_dir}/clustering_histogram.png"
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
 
     if show_plot:
         plt.show()
@@ -1473,7 +1472,8 @@ def display_results(
     for _, row in community_nutrition.iterrows():
         comm_id = int(row["community_id"])
         print(f"Community {comm_id} (Size: {int(row['size'])} foods)")
-        print(f"Examples: {row['food_examples']}")
+        print(f"Examples:\n {row['food_examples']}")
+        print(f"Base nutrients:")
 
         for nutrient_code in key_display_nutrients:
             if nutrient_code in row:
@@ -1523,7 +1523,7 @@ def pagerank(G, dampening=0.85, output_dir=".", show_plot=True):
     plt.title("Top 10 Influential Food Items by PageRank Score")
     plt.tight_layout()
     filename = f"{output_dir}/pagerank_score.png"
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
 
     if show_plot:
         plt.show()
@@ -1552,7 +1552,10 @@ def pagerank(G, dampening=0.85, output_dir=".", show_plot=True):
         node_color=node_colors,
         cmap=cmap,
         ax=ax,
+        node_size=60,
+        alpha=0.8,
     )
+
     nx.draw_networkx_edges(subgraph, pos=pos, width=1.5, edge_color="gray", ax=ax)
 
     # Add labels manually and collect them for adjustment
@@ -1576,7 +1579,7 @@ def pagerank(G, dampening=0.85, output_dir=".", show_plot=True):
     ax.set_axis_off()  # Turn off axis
     plt.tight_layout()
     filename = f"{output_dir}/pagerank_network.png"
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
 
     if show_plot:
         plt.show()
@@ -1703,7 +1706,7 @@ def plot_assortativity(results, show_plot=False, output_dir="."):
 
     plt.tight_layout()
     filename = f"{output_dir}/nutrient_assortativity_bar_chart.png"
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
 
     if show_plot:
         plt.show()
@@ -1763,7 +1766,7 @@ def plot_assortativity(results, show_plot=False, output_dir="."):
 
     # Plot the heatmap
     sns.heatmap(
-        assortativity_df.T,
+        assortativity_df,
         annot=True,
         cmap="coolwarm",
         center=0,
@@ -1775,7 +1778,7 @@ def plot_assortativity(results, show_plot=False, output_dir="."):
     plt.title("Nutrient Assortativity Heatmap")
     plt.tight_layout()
     filename = f"{output_dir}/nutrient_assortativity_heatmap.png"
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
 
     if show_plot:
         plt.show()
@@ -1808,7 +1811,7 @@ def k_core_analyzis(G, output_dir="."):
     plt.ylabel("Number of Nodes")
     plt.title("Distribution of Core Numbers")
     filename = f"{output_dir}/core_distribution.png"
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
 
     # Select representative k values (e.g., min, 25%, 50%, 75%, max)
     k_values = [
@@ -1831,10 +1834,10 @@ def k_core_analyzis(G, output_dir="."):
         if len(k_core.nodes()) < 5000:
             plt.figure(figsize=(8, 8))
             pos = nx.spring_layout(k_core, seed=42)
-            nx.draw(k_core, pos, node_size=50, with_labels=False)
+            nx.draw(k_core, pos, node_size=30, with_labels=False)
             plt.title(f"k-core (k={k})")
             filename = f"{output_dir}/k_core_{k}.png"
-            plt.savefig(filename, bbox_inches="tight")
+            plt.savefig(filename, bbox_inches="tight", dpi=300)
 
     # Group nodes by their core number
     nodes_by_core = {}
@@ -1893,7 +1896,7 @@ def k_core_analyzis(G, output_dir="."):
 
     plt.tight_layout()
     filename = f"{output_dir}/core_properties.png"
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
 
 
 def run_nutritional_network_analysis(
@@ -1935,7 +1938,7 @@ def run_nutritional_network_analysis(
         print("File found, not saving")
 
     visualize_network(
-        graph_data, max_nodes=300, output_dir=output_dir, show_plot=show_plot
+        graph_data, max_nodes=2000, output_dir=output_dir, show_plot=show_plot
     )
 
     # Analyze centrality
@@ -2058,9 +2061,6 @@ def hits_analyzis(graph_data, output_dir=".", show_plot=True):
         plt.figure(figsize=(12, 8))
         pos = nx.spring_layout(subgraph, seed=42)  # For reproducible layout
 
-        # Node sizes based on scores
-        node_sizes = [score * 1000 for node, score in top_nodes.items()]
-
         # Add node labels (food names) with smaller font
         labels = {node: food_mapping[node] for node in subgraph.nodes()}
         # nx.draw_networkx_labels(
@@ -2071,12 +2071,15 @@ def hits_analyzis(graph_data, output_dir=".", show_plot=True):
         nx.draw_networkx(
             subgraph,
             pos=pos,
-            node_size=node_sizes,
             node_color="skyblue",
             with_labels=True,
             font_size=10,
             labels=labels,
             arrows=True,
+            node_size=100,
+            edge_color="gray",
+            alpha=0.8,
+            width=0.2,
         )
 
         plt.title(title)
@@ -2084,7 +2087,7 @@ def hits_analyzis(graph_data, output_dir=".", show_plot=True):
         plt.tight_layout()
 
         filename = f"{output_dir}/HITS_top_nodes.png"
-        plt.savefig(filename, bbox_inches="tight")
+        plt.savefig(filename, bbox_inches="tight", dpi=300)
 
         if show_plot:
             plt.show()
@@ -2119,8 +2122,6 @@ def hits_analyzis(graph_data, output_dir=".", show_plot=True):
         auth_only = [n for n in top_auths if n not in top_hubs]
         both = [n for n in top_hubs if n in top_auths]
 
-        nx.draw_networkx_edges(subgraph, pos, alpha=0.4)
-
         # Add node labels (food names) with smaller font
         labels = {node: food_mapping[node] for node in subgraph.nodes()}
         # nx.draw_networkx_labels(
@@ -2133,28 +2134,33 @@ def hits_analyzis(graph_data, output_dir=".", show_plot=True):
             pos,
             nodelist=hub_only,
             node_color="blue",
-            node_size=500,
+            node_size=100,
             label="Hubs",
+            alpha=0.8,
         )
         nx.draw_networkx_nodes(
             subgraph,
             pos,
             nodelist=auth_only,
             node_color="red",
-            node_size=500,
+            node_size=100,
             label="Authorities",
+            alpha=0.8,
         )
         nx.draw_networkx_nodes(
             subgraph,
             pos,
             nodelist=both,
             node_color="purple",
-            node_size=700,
-            label="Both",
+            node_size=200,
+            label="Hub and authority",
+            alpha=0.8,
         )
 
         # Draw edges and labels
-        nx.draw_networkx_edges(subgraph, pos, arrows=True, alpha=0.5)
+        nx.draw_networkx_edges(
+            subgraph, pos, arrows=True, alpha=0.8, edge_color="gray", width=0.2
+        )
         nx.draw_networkx_labels(subgraph, pos, labels=labels)
 
         plt.title("Top Hubs and Authorities in Nutritional Network")
@@ -2163,7 +2169,7 @@ def hits_analyzis(graph_data, output_dir=".", show_plot=True):
         plt.tight_layout()
 
         filename = f"{output_dir}/HITS_combined.png"
-        plt.savefig(filename, bbox_inches="tight")
+        plt.savefig(filename, bbox_inches="tight", dpi=300)
 
         if show_plot:
             plt.show()
