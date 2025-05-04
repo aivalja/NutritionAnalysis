@@ -1999,6 +1999,7 @@ def run_nutritional_network_analysis(
 
     hits_analyzis(graph_data, output_dir=output_dir, show_plot=show_plot)
 
+    k_core_analyzis(G, output_dir=output_dir)
 
     return {
         "graph": G,
