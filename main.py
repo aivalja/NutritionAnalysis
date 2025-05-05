@@ -1008,7 +1008,7 @@ def plot_communities(
             for node, degree in sorted(node_degrees, key=lambda x: x[1], reverse=True)
         ]
 
-        # Take 10% of nodes from each community, minimum 5 nodes if available
+        # Take 20% of nodes from each community, minimum 5 nodes if available
         num_to_select = min(
             len(comm_list), max(5, int(math.ceil(len(comm_list) * 0.20)))
         )
