@@ -786,6 +786,11 @@ def calculate_centralities(
         centrality["betweenness"] = nx.betweenness_centrality(
             G, k=k_betweenness, seed=42, weight="weight"
         )
+
+        print_result("Calculating full eigenvector centrality", "", indent=6)
+        centrality["eigenvector"] = nx.eigenvector_centrality(
+            G, weight="weight", max_iter=1000
+        )
     else:
         print_result("Calculating full closeness centrality", "", indent=6)
         centrality["closeness"] = nx.closeness_centrality(G, distance=weight_distance)
@@ -793,6 +798,11 @@ def calculate_centralities(
         print_result("Calculating full betweenness centrality", "", indent=6)
         centrality["betweenness"] = nx.betweenness_centrality(
             G, seed=42, weight="weight"
+        )
+
+        print_result("Calculating full eigenvector centrality", "", indent=6)
+        centrality["eigenvector"] = nx.eigenvector_centrality(
+            G, weight="weight", max_iter=1000
         )
 
     return centrality
@@ -1350,6 +1360,7 @@ def analyze_centrality(G, files, show_plot=False, output_dir=".", weighted=True)
                 "degree": centrality_measures["degree"],
                 "closeness": centrality_measures["closeness"],
                 "betweenness": centrality_measures["betweenness"],
+                "eigenvector": centrality_measures["eigenvector"],
             },
             "Approximation",
             output_dir=f"{output_dir}/centrality",
@@ -1361,6 +1372,7 @@ def analyze_centrality(G, files, show_plot=False, output_dir=".", weighted=True)
                 "degree": centrality_measures["degree"],
                 "closeness": centrality_measures["closeness"],
                 "betweenness": centrality_measures["betweenness"],
+                "eigenvector": centrality_measures["eigenvector"],
             },
             "full",
             output_dir=f"{output_dir}/centrality",
