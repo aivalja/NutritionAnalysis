@@ -1322,6 +1322,9 @@ def initialize_data(
         "louvain_communities": os.path.join(data_dir, "louvain_communities.pkl"),
         "clustering": os.path.join(data_dir, "clustering.pkl"),
         "assortativity": os.path.join(data_dir, "assortativity.pkl"),
+        "robustness": os.path.join(
+            data_dir, f'robustness_results{"_weighted" if weighted else ""}.pkl'
+        ),
     }
 
     # Load or calculate graph data
@@ -1937,6 +1940,325 @@ def k_core_analysis(G, output_dir="."):
     plt.close()
 
 
+def analyze_network_robustness(G, centrality_measures, removal_fraction=0.5, steps=20):
+    """
+    Analyze network robustness by simulating node removal and measuring impacts.
+
+    Parameters:
+    -----------
+    G : networkx.Graph
+        The network to analyze
+    centrality_measures : dict
+        Dictionary containing various centrality measures for nodes
+    removal_fraction : float
+        Fraction of nodes to remove (0.0 to 1.0)
+    steps : int
+        Number of steps to take when removing nodes
+
+    Returns:
+    --------
+    dict
+        Results of robustness analysis
+    """
+    # Make a copy of the graph to avoid modifying the original
+    G_orig = G.copy()
+
+    # Calculate the number of nodes to remove in each step
+    num_nodes = G.number_of_nodes()
+    nodes_to_remove = int(num_nodes * removal_fraction)
+    nodes_per_step = max(1, nodes_to_remove // steps)
+
+    # Prepare different node removal strategies
+    removal_strategies = {
+        "random": list(G.nodes()),  # Will be shuffled later
+        "degree": sorted(G.nodes(), key=lambda n: G.degree(n), reverse=True),
+        "betweenness": sorted(
+            G.nodes(),
+            key=lambda n: centrality_measures["betweenness"].get(n, 0),
+            reverse=True,
+        ),
+        "closeness": sorted(
+            G.nodes(),
+            key=lambda n: centrality_measures["closeness"].get(n, 0),
+            reverse=True,
+        ),
+        "eigenvector": sorted(
+            G.nodes(),
+            key=lambda n: centrality_measures["eigenvector"].get(n, 0),
+            reverse=True,
+        ),
+    }
+
+    # Shuffle the random strategy
+    random.shuffle(removal_strategies["random"])
+
+    # Initialize results
+    results = {
+        "removal_fraction": [],
+        "largest_cc_size": {strategy: [] for strategy in removal_strategies},
+        "num_connected_components": {strategy: [] for strategy in removal_strategies},
+        "average_path_length": {strategy: [] for strategy in removal_strategies},
+        "removed_nodes": {strategy: [] for strategy in removal_strategies},
+    }
+
+    # For each removal strategy
+    for strategy, nodes_list in removal_strategies.items():
+        # Reset the graph
+        G_tmp = G_orig.copy()
+        removed = 0
+
+        # Remove nodes step by step
+        for step in tqdm(range(steps + 1)):  # +1 to include the baseline
+            # Calculate the fraction of nodes removed
+            fraction_removed = removed / num_nodes
+
+            # Only add to results list for the first strategy (to avoid duplicates)
+            if strategy == "random":
+                results["removal_fraction"].append(fraction_removed)
+
+            # Calculate connectivity metrics
+            largest_cc_size = (
+                len(max(nx.connected_components(G_tmp), key=len))
+                / G_tmp.number_of_nodes()
+            )
+            num_connected_components = nx.number_connected_components(G_tmp)
+
+            # Calculate average path length if the graph is still connected
+            if nx.is_connected(G_tmp) and G_tmp.number_of_nodes() > 1:
+                avg_path_length = nx.average_shortest_path_length(G_tmp)
+            else:
+                # Use average path length of largest component if disconnected
+                largest_cc = max(nx.connected_components(G_tmp), key=len)
+                if len(largest_cc) > 1:
+                    G_largest_cc = G_tmp.subgraph(largest_cc)
+                    avg_path_length = nx.average_shortest_path_length(G_largest_cc)
+                else:
+                    avg_path_length = 0  # No paths if only single nodes remain
+
+            # Record the results
+            results["largest_cc_size"][strategy].append(largest_cc_size)
+            results["num_connected_components"][strategy].append(
+                num_connected_components
+            )
+            results["average_path_length"][strategy].append(avg_path_length)
+
+            # Remove nodes for the next step (skip after the last measurement)
+            if step < steps:
+                # Calculate how many nodes to remove in this step
+                step_nodes = min(
+                    nodes_per_step, len(G_tmp) - 1
+                )  # Keep at least one node
+
+                # Get the nodes to remove in this step
+                nodes_to_remove_step = nodes_list[removed : removed + step_nodes]
+
+                # Record removed nodes
+                results["removed_nodes"][strategy].extend(nodes_to_remove_step)
+
+                # Remove the nodes
+                G_tmp.remove_nodes_from(nodes_to_remove_step)
+                removed += step_nodes
+
+    return results
+
+
+def plot_robustness_analysis(results, output_dir, show_plot=False):
+    """
+    Visualize the results of network robustness analysis.
+
+    Parameters:
+    -----------
+    results : dict
+        Results from analyze_network_robustness
+    output_dir : str
+        Directory to save the plots
+    show_plot : bool
+        Whether to display the plots interactively
+    """
+    # Create figure directory if it doesn't exist
+    fig_dir = os.path.join(output_dir, "figures")
+    os.makedirs(fig_dir, exist_ok=True)
+
+    # Set colors for different strategies
+    colors = {
+        "random": "blue",
+        "degree": "red",
+        "betweenness": "green",
+        "closeness": "purple",
+        "eigenvector": "orange",
+    }
+
+    # Plot largest connected component size vs removal fraction
+    plt.figure(figsize=(10, 6))
+    for strategy, values in results["largest_cc_size"].items():
+        plt.plot(
+            results["removal_fraction"],
+            values,
+            label=f"{strategy} removal",
+            color=colors[strategy],
+            marker="o",
+        )
+
+    plt.xlabel("Fraction of Nodes Removed")
+    plt.ylabel("Relative Size of Largest Connected Component")
+    plt.title("Network Robustness: Impact on Largest Connected Component")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.7)
+
+    # Save the figure
+    plt.savefig(
+        os.path.join(fig_dir, "robustness_largest_cc.png"), dpi=300, bbox_inches="tight"
+    )
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
+
+    # Plot number of connected components vs removal fraction
+    plt.figure(figsize=(10, 6))
+    for strategy, values in results["num_connected_components"].items():
+        plt.plot(
+            results["removal_fraction"],
+            values,
+            label=f"{strategy} removal",
+            color=colors[strategy],
+            marker="o",
+        )
+
+    plt.xlabel("Fraction of Nodes Removed")
+    plt.ylabel("Number of Connected Components")
+    plt.title("Network Robustness: Impact on Connected Components")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.7)
+
+    # Save the figure
+    plt.savefig(
+        os.path.join(fig_dir, "robustness_num_components.png"),
+        dpi=300,
+        bbox_inches="tight",
+    )
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
+
+    # Plot average path length vs removal fraction
+    plt.figure(figsize=(10, 6))
+    for strategy, values in results["average_path_length"].items():
+        plt.plot(
+            results["removal_fraction"],
+            values,
+            label=f"{strategy} removal",
+            color=colors[strategy],
+            marker="o",
+        )
+
+    plt.xlabel("Fraction of Nodes Removed")
+    plt.ylabel("Average Shortest Path Length")
+    plt.title("Network Robustness: Impact on Average Path Length")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.7)
+
+    # Save the figure
+    plt.savefig(
+        os.path.join(fig_dir, "robustness_path_length.png"),
+        dpi=300,
+        bbox_inches="tight",
+    )
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
+
+
+def visualize_network_degradation(
+    G, removal_results, output_dir, show_plot=False, max_nodes=100
+):
+    """
+    Visualize the network before and after node removal.
+
+    Parameters:
+    -----------
+    G : networkx.Graph
+        The original network
+    removal_results : dict
+        Results from robustness analysis including removed nodes
+    output_dir : str
+        Directory to save the plots
+    show_plot : bool
+        Whether to display the plots interactively
+    max_nodes : int
+        Maximum number of nodes to display for clarity
+    """
+    # Create figure directory if it doesn't exist
+    fig_dir = os.path.join(output_dir, "figures")
+    os.makedirs(fig_dir, exist_ok=True)
+
+    # If the graph is too large, take a smaller subgraph for visualization
+    if G.number_of_nodes() > max_nodes:
+        # Select the nodes with highest degree
+        nodes = sorted(G.nodes(), key=lambda n: G.degree(n), reverse=True)[:max_nodes]
+        G_vis = G.subgraph(nodes).copy()
+    else:
+        G_vis = G.copy()
+
+    # Create a figure for the original network
+    plt.figure(figsize=(12, 10))
+    pos = nx.spring_layout(G_vis, seed=42)  # Consistent layout
+
+    # Draw the original network
+    nx.draw_networkx_nodes(G_vis, pos, node_size=50, node_color="blue", alpha=0.7)
+    nx.draw_networkx_edges(G_vis, pos, alpha=0.4)
+
+    plt.title("Original Network")
+    plt.axis("off")
+
+    # Save the figure
+    plt.savefig(
+        os.path.join(fig_dir, "network_original.png"), dpi=300, bbox_inches="tight"
+    )
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
+
+    # For each strategy, visualize the network after removal
+    for strategy, removed_nodes in removal_results["removed_nodes"].items():
+        # Create a copy of the visualization graph
+        G_after = G_vis.copy()
+
+        # Get the nodes to remove (that are in the visualization graph)
+        nodes_to_remove = [n for n in removed_nodes if n in G_vis.nodes()]
+
+        # Only take a subset if there are too many
+        if len(nodes_to_remove) > G_vis.number_of_nodes() // 2:
+            nodes_to_remove = nodes_to_remove[: G_vis.number_of_nodes() // 2]
+
+        # Remove the nodes
+        G_after.remove_nodes_from(nodes_to_remove)
+
+        # Create a figure for the degraded network
+        plt.figure(figsize=(12, 10))
+
+        # Draw the degraded network using the same layout
+        nx.draw_networkx_nodes(G_after, pos, node_size=50, node_color="red", alpha=0.7)
+        nx.draw_networkx_edges(G_after, pos, alpha=0.4)
+
+        plt.title(f"Network After {strategy.capitalize()} Node Removal")
+        plt.axis("off")
+
+        # Save the figure
+        plt.savefig(
+            os.path.join(fig_dir, f"network_after_{strategy}_removal.png"),
+            dpi=300,
+            bbox_inches="tight",
+        )
+        if show_plot:
+            plt.show()
+        else:
+            plt.close()
+
+
 def run_nutritional_network_analysis(
     output_dir="tmp",
     dataset="Fineli_Rel20",
@@ -2053,13 +2375,37 @@ def run_nutritional_network_analysis(
 
     hits_analysis(graph_data, output_dir=output_dir, show_plot=show_plot)
 
-    return {
+    # Network Robustness Analysis
+    print_task_header(15, "Network Robustness Analysis")
+
+    # Load or calculate robustness results
+    robustness_results = load_or_calculate(
+        files["robustness"],
+        analyze_network_robustness,
+        calculate_args=[G, centrality_measures],
+        calculate_kwargs={"removal_fraction": 0.95, "steps": 20},
+        description="Network robustness analysis",
+    )
+
+    # Plot robustness analysis results
+    plot_robustness_analysis(robustness_results, output_dir, show_plot)
+
+    # Visualize network degradation
+    visualize_network_degradation(
+        G, robustness_results, output_dir, show_plot, max_nodes=500
+    )
+
+    # Add robustness results to the return dictionary
+    return_dict = {
         "graph": G,
         "centrality_measures": centrality_measures,
         "communities": louvain_comms,
         "community_nutrition": community_nutrition,
         "assortativity_results": assortativity_results,
+        "robustness_results": robustness_results,
     }
+
+    return return_dict
 
 
 def hits_analysis(graph_data, output_dir=".", show_plot=True):
