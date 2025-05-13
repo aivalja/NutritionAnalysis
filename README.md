@@ -1,18 +1,62 @@
-# Notes
+# Fineli Nutritional Dataset Analysis
 
-## Task 2
+This project analyzes the Fineli nutritional dataset containing detailed information for approximately 4,000 food items. It creates and analyzes nutritional network graphs where nodes represent food items and edges represent similarities in nutritional content.
 
-Maybe the weights should be normalized to 0-1 range? Or even use some other way to calculate the similarity. At the moment edges are created only if the weight is over x.
+## Features
 
-## Task 6
+- **Data preprocessing** for handling missing values and inconsistencies
+- **Network graph analysis** including:
+  - Construction of nutritional similarity networks
+  - Analysis of degree, closeness, and betweenness distributions
+  - Clustering coefficient calculations
+  - Community detection (Girvan-Newman and Louvain algorithms)
+  - Identification of influential items (PageRank, HITS)
+  - Network robustness analysis through node removal simulations
+  - K-core decomposition
 
-At the moment only Louvain community detection algorithms is ran, as Giervan-Newman takes really long time. Need to either just run it overnight or make it faster somehow.
+## Installation
 
-## Memos
+Clone the repository and install required dependencies:
 
-Make sure that plot is saved as file
-Make plots coherent
-Change graph\_data to contain food name in addition to id?
-Could use cosine similarity for finding the most important nutrients for each group (find the nutrient combination that gives the highest cosine similarity)
+```bash
+git clone https://github.com/aivalja/NutritionAnalysis.git
+cd NutritionAnalysis
+pip install -r requirements.txt
+```
 
-Graph drawing, only every n nodes
+## Usage
+
+Run the analysis with:
+
+```bash
+python3 main.py
+```
+
+## Project Overview
+
+This project performs comprehensive network analysis on the Fineli nutritional dataset, where food items are represented as nodes and their nutritional similarities as edges.
+
+### Key Features
+
+- **Data Preprocessing**: Handles missing values and normalizes nutritional data
+- **Network Creation**: Generates similarity-based food networks
+- **Centrality Analysis**: Calculates and visualizes degree, closeness, and betweenness distributions
+- **Community Detection**: Identifies food communities using Louvain algorithm
+- **Advanced Network Metrics**:
+  - PageRank for influential food identification
+  - HITS algorithm for hub and authority detection
+  - K-core decomposition for network structure analysis
+  - Assortativity coefficient calculation
+  - Network robustness simulation
+
+## Visualizations
+
+The program generates various network visualizations including community graphs, centrality distributions, and influence networks.
+
+## Requirements
+
+See requirements.txt for detailed dependencies.
+
+## Note
+
+This project is computationally intensive and may require significant processing time for large datasets.
