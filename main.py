@@ -1,23 +1,23 @@
-import random
+import datetime
+import math
 import os
 import pickle
+import random
+import sys
+from collections import Counter
 from typing import Dict, Any, Callable, List, Optional
-from collections import Counter, defaultdict
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import MinMaxScaler
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
 import powerlaw
-import math
-import sys
-import datetime
-from networkx.algorithms.community.centrality import girvan_newman
-from networkx.algorithms.community import louvain_communities
 import seaborn as sns
-from tqdm import tqdm
 from adjustText import adjust_text
+from networkx.algorithms.community import louvain_communities
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import MinMaxScaler
+from tqdm import tqdm
 
 
 default_nutrients = ["ENERC", "PROT", "FAT", "CHOAVL", "FIBC", "VITC"]
@@ -1525,7 +1525,7 @@ def display_results(
         # Show examples
         if comm_id in community_top_foods and community_top_foods[comm_id]:
             print("  Example top similar foods:")
-            for food in community_top_foods[comm_id][:3]:
+            for food in community_top_foods[comm_id][:10]:
                 print(
                     f"    - {food['food_name']} (Avg Similarity: {food['avg_similarity']:.3f})"
                 )
@@ -2322,9 +2322,6 @@ def run_nutritional_network_analysis(
     )
 
     # Visualize communities
-    # plot_communities(
-    #     G, gn_communities, "Communities detected by Girvan-Newman algorithm"
-    # )
     plot_communities(
         G,
         louvain_comms,
@@ -2334,15 +2331,8 @@ def run_nutritional_network_analysis(
         food_items=community_top_foods,
     )
 
-    # Display community statistics
-    # print_result(
-    #     label="Girvan-Newman Communities Statistics:",
-    #     value=calculate_community_stats(G, gn_communities),
-    #     indent=6,
-    # )
-
-    # print("Louvain Communities Statistics:")
-    # print(calculate_community_stats(G, louvain_comms))
+    print("Louvain Communities Statistics:")
+    print(calculate_community_stats(G, louvain_comms))
 
     # Display results
     display_results(
@@ -2514,11 +2504,8 @@ def hits_analysis(graph_data, output_dir=".", show_plot=True):
         auth_only = [n for n in top_auths if n not in top_hubs]
         both = [n for n in top_hubs if n in top_auths]
 
-        # Add node labels (food names) with smaller font
+        # Add node labels (food names)
         labels = {node: food_mapping[node] for node in subgraph.nodes()}
-        # nx.draw_networkx_labels(
-        #     subgraph, pos, labels=labels, font_size=8, font_family="sans-serif"
-        # )
 
         # Draw the nodes with different colors
         nx.draw_networkx_nodes(
